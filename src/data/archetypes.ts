@@ -1,0 +1,18 @@
+export const ARCHETYPES: Record<string, { title: string; description: string }> = {
+    'INTJ': { title: "Il Progettista", description: "Strategico, indipendente e orientato al miglioramento. Ti piace costruire piani a lungo termine e ottimizzare sistemi. A volte puoi apparire distante o troppo esigente." },
+    'INTP': { title: "Il Teorico", description: "Curioso, analitico e amante delle idee. Ti piace capire come funzionano le cose e smontare i concetti fino alle basi. Rischi di rimandare l'azione cercando \"la teoria perfetta\"." },
+    'ENTJ': { title: "Il Condottiero", description: "Diretto, ambizioso e focalizzato sui risultati. Ti viene naturale decidere, organizzare e guidare. Attenzione a non schiacciare i tempi o le sensibilità altrui." },
+    'ENTP': { title: "L'Innovatore", description: "Creativo, rapido e provocatore costruttivo. Ti entusiasmano le possibilità e i dibattiti intelligenti. Puoi perdere interesse quando la fase diventa solo esecuzione e routine." },
+    'INFJ': { title: "Il Consigliere", description: "Intuitivo, profondo e orientato al senso. Leggi bene le persone e cerchi coerenza con i tuoi valori. Rischi di caricarti troppo sulle spalle e di chiuderti se non ti senti capito." },
+    'INFP': { title: "L'Idealista", description: "Idealista, autentico e sensibile. Cerchi significato e allineamento con ciò che senti giusto. A volte l'eccesso di introspezione può trasformarsi in indecisione o autosvalutazione." },
+    'ENFJ': { title: "Il Mentore", description: "Empatico, motivante e capace di fare squadra. Ti viene naturale far emergere il meglio dagli altri. Occhio a non mettere i bisogni altrui sempre prima dei tuoi." },
+    'ENFP': { title: "L'Ispiratore", description: "Energico, ispiratore e orientato alle relazioni. Ami esplorare idee e connessioni umane. Puoi soffrire la ripetitività e saltare tra progetti se manca struttura." },
+    'ISTJ': { title: "Il Custode delle Regole", description: "Affidabile, concreto e orientato al dovere. Ti piace chiarezza, regole e responsabilità. In certe situazioni puoi diventare rigido o poco tollerante verso l'improvvisazione." },
+    'ISFJ': { title: "Il Protettore", description: "Premuroso, costante e attento ai dettagli delle persone. Ti piace rendere l'ambiente stabile e sicuro. Rischi di trattenere troppo e di dire sì quando vorresti dire no." },
+    'ESTJ': { title: "L'Amministratore", description: "Pratico, organizzatore e deciso. Ti piace far funzionare le cose con ordine e standard chiari. A volte puoi sembrare troppo duro o impaziente con chi procede diversamente." },
+    'ESFJ': { title: "L'Ospite", description: "Sociale, accogliente e orientato all'armonia. Ti piace creare coesione e prenderti cura del clima del gruppo. Rischi di cercare troppo approvazione o evitare confronti necessari." },
+    'ISTP': { title: "Il Tecnico", description: "Calmo, tecnico e orientato alla soluzione. Ti piace intervenire in modo efficace quando c'è un problema concreto. Puoi sembrare distaccato e annoiarti con troppa teoria o burocrazia." },
+    'ISFP': { title: "L'Artista", description: "Sensibile, estetico e spontaneo. Ti piace vivere esperienze autentiche e creare bellezza. Rischi di evitare conflitti e di rimandare decisioni strutturali." },
+    'ESTP': { title: "Il Dinamico", description: "Dinamico, pratico e amante dell'azione. Ti piace muoverti sul momento e cogliere opportunità. A volte puoi sottovalutare conseguenze a lungo termine o annoiarti con la pianificazione." },
+    'ESFP': { title: "L'Animatore", description: "Espressivo, caloroso e orientato al presente. Ti piace intrattenere, condividere e rendere l'esperienza viva. Rischi di disperdere energie se manca una direzione chiara." },
+};

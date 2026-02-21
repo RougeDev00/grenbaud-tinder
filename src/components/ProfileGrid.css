@@ -1,0 +1,145 @@
+.profile-grid-container {
+    padding: 20px;
+    padding-bottom: 80px;
+    /* Navbar space */
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.grid-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+}
+
+.grid-card-wrapper {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* Force aspect ratio or height if needed, but ProfileCard handles it usually. 
+       ProfileCard might need height adjustment for grid though. */
+    aspect-ratio: 3/4;
+}
+
+/* Adjust ProfileCard for grid usage */
+.grid-card-wrapper .profile-card {
+    height: 100%;
+    width: 100%;
+    border-radius: 0;
+    /* Removed pointer-events: none to allow photo nav */
+}
+
+/* Override absolute positioning of ProfileCard internal elements if necessary 
+   Currently ProfileCard is designed for the deck (absolute). 
+   We might need to make ProfileCard more flexible or wrap it differently.
+   
+   Actually, ProfileCard uses 100% width/height. So if wrapper has size, it works.
+*/
+
+.grid-card-wrapper:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+}
+
+.grid-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 20;
+    /* Ensure it is above photos (z-index 1-2) */
+    /* Don't block the card underneath */
+}
+
+.profile-card.is-center-hovered .grid-card-overlay {
+    opacity: 1;
+}
+
+.grid-card-overlay span {
+    color: white;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.grid-loading,
+.grid-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-secondary);
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px 8px 10px;
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: fit-content;
+}
+
+.btn-back-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--primary-light);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(139, 92, 246, 0.3);
+    transform: translateX(-4px);
+}
+
+.btn-back:hover .btn-back-icon {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Responsive adjustments */
+@media (min-width: 600px) {
+    .profile-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+    }
+}

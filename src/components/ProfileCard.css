@@ -1,0 +1,319 @@
+.profile-card {
+    width: 100%;
+    max-width: 400px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    position: relative;
+    user-select: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Photos Container - Hybrid Approach: Grid for Images (Size), Absolute for UI (Position) */
+.profile-card-photos {
+    position: relative;
+    width: 100%;
+    /* No fixed height, let content define it via aspect-ratio or image size */
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    cursor: pointer;
+    display: grid;
+    grid-template-areas: "stack";
+}
+
+.profile-card-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    /* Grid placement so they stack and size the container */
+    grid-area: stack;
+    transition: transform 0.5s ease;
+}
+
+/* Scaling effect only on center hover */
+.profile-card.is-center-hovered .profile-card-photo {
+    transform: scale(1.05);
+}
+
+/* Photo dots */
+.photo-dots {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.photo-dot {
+    flex: 1;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    backdrop-filter: blur(4px);
+}
+
+.photo-dot--active {
+    background: white;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+/* Gradient overlay - stronger for readability */
+.profile-card-gradient {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 75%;
+    background: linear-gradient(to top,
+            rgba(0, 0, 0, 0.95) 0%,
+            rgba(0, 0, 0, 0.8) 30%,
+            rgba(0, 0, 0, 0.4) 60%,
+            transparent 100%);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Content Overlay */
+.profile-card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    z-index: 5;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Name Row */
+.profile-card-name-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.profile-card-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    line-height: 1;
+}
+
+.profile-card-age {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Badges Row */
+.profile-card-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card-badge--gender {
+    background: rgba(139, 92, 246, 0.2);
+    color: #d8b4fe;
+}
+
+.card-badge--looking {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+/* Bio */
+.profile-card-bio-preview {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+/* Hobbies */
+.profile-card-hobbies {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    margin-top: 6px;
+    scrollbar-width: none;
+    /* Hide scrollbar */
+}
+
+.profile-card-hobbies::-webkit-scrollbar {
+    display: none;
+}
+
+.hobby-chip {
+    flex-shrink: 0;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.7rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Match Badge Base */
+.match-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    font-weight: 800;
+    font-size: 0.9rem;
+    animation: fadeInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
+}
+
+/* === TIER STYLES === */
+
+/* Estimated - Neutral/Provisional */
+.match-tier-estimated {
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    box-shadow: none;
+    /* No glow for estimated */
+}
+
+/* Titanico (90+) - Gold/Purple/Magic */
+.match-tier-titan {
+    background: linear-gradient(135deg, #FFD700, #FDB931, #a855f7);
+    background-size: 200% 200%;
+    color: #1a0b2e;
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    animation: gradientFlow 3s ease infinite, fadeInScale 0.4s ease-out;
+}
+
+/* Alto (80-89) - Hot Pink/Purple */
+.match-tier-high {
+    background: linear-gradient(135deg, #ec4899, #a855f7);
+    color: white;
+    border: 1px solid rgba(236, 72, 153, 0.5);
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
+}
+
+/* Buono (60-79) - Blue/Purple */
+.match-tier-good {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    border: 1px solid rgba(99, 102, 241, 0.5);
+}
+
+/* Neutro (<60) - Glass/Gray */
+.match-tier-mid {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes gradientFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Center Action Overlay (Vedi Profilo) */
+.profile-card-center-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.profile-card.is-center-hovered .profile-card-center-overlay {
+    opacity: 1;
+}
+
+.profile-card-center-overlay span {
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.profile-card.is-center-hovered .profile-card-center-overlay span {
+    transform: scale(1);
+}

@@ -1,0 +1,188 @@
+.inbox-container {
+    padding: 24px 20px 80px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.inbox-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+}
+
+.inbox-loading {
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: 40px;
+}
+
+.inbox-empty {
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inbox-hint {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.inbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inbox-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid var(--border-subtle);
+}
+
+.inbox-item--unread {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.inbox-item:active {
+    transform: scale(0.98);
+}
+
+.inbox-item:hover {
+    box-shadow: var(--shadow-md);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* Avatar with badge wrapper */
+.inbox-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.inbox-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-subtle);
+}
+
+.inbox-item--unread .inbox-avatar {
+    border-color: var(--primary);
+}
+
+.inbox-avatar-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+}
+
+.inbox-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.inbox-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.inbox-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.inbox-item--unread .inbox-name {
+    font-weight: 800;
+}
+
+.inbox-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.inbox-item--unread .inbox-time {
+    color: var(--primary-light);
+    font-weight: 600;
+}
+
+.inbox-message-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inbox-message-preview {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.inbox-item--unread .inbox-message-preview {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.inbox-unread-badge {
+    background: linear-gradient(135deg, var(--primary), #EC4899);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4);
+}
+
+.inbox-footer-hint {
+    text-align: center;
+    margin-top: 30px;
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.inbox-tick {
+    font-size: 0.7rem;
+    margin-right: 4px;
+    color: rgba(255, 255, 255, 0.5);
+    display: inline-block;
+}

@@ -1,0 +1,186 @@
+/* App Layout */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    padding-bottom: 68px;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    background: rgba(6, 5, 11, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.app-logo {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.app-logo-img {
+    height: auto;
+    max-height: 34px;
+    /* Reduced "un pelo" */
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.app-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    /* Context for absolute children */
+}
+
+/* Spotlight Effect behind cards */
+.main-spotlight {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    max-width: 600px;
+    max-height: 800px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+    filter: blur(40px);
+    z-index: -1;
+    pointer-events: none;
+    animation: spotlight-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes spotlight-pulse {
+    0% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(0.95);
+    }
+
+    100% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+}
+
+/* Matches Page */
+.matches-page {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+}
+
+.matches-empty {
+    text-align: center;
+    animation: fadeInScale 0.4s ease-out;
+}
+
+.matches-empty-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.matches-empty h3 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+}
+
+.matches-empty p {
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+}
+
+.matches-hint {
+    font-size: 0.8rem;
+    margin-top: 12px;
+    color: var(--text-secondary) !important;
+}
+
+/* Intent Modal */
+.intent-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 5, 11, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 1000;
+    padding: 24px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.intent-modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-xl);
+    padding: 36px 28px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    animation: fadeInScale 0.3s ease-out;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+.intent-modal-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 1.5rem;
+}
+
+.intent-modal h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.intent-modal p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.intent-modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.intent-modal-actions .btn {
+    width: 100%;
+    padding: 13px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+}

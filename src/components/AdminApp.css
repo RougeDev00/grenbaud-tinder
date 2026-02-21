@@ -1,0 +1,444 @@
+/* Admin App Styles */
+
+:root {
+    --admin-bg: #09090b;
+    --admin-surface: #18181b;
+    --admin-border: #27272a;
+    --admin-text: #e4e4e7;
+    --admin-text-dim: #a1a1aa;
+
+    --admin-primary: #8b5cf6;
+    --admin-danger: #ef4444;
+    --admin-warn: #f59e0b;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', sans-serif;
+    background: var(--admin-bg);
+    color: var(--admin-text);
+}
+
+/* Login Screen */
+.admin-login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: #000;
+}
+
+.admin-login-box {
+    background: var(--admin-surface);
+    padding: 40px;
+    border-radius: 16px;
+    border: 1px solid var(--admin-border);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.admin-logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 24px;
+    color: white;
+}
+
+.admin-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-login-form input {
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    padding: 14px;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    text-align: center;
+    font-family: monospace;
+}
+
+.admin-login-form input:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+}
+
+.btn-admin-login {
+    background: var(--admin-primary);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-admin-login:hover {
+    background: #7c3aed;
+}
+
+.admin-error {
+    color: var(--admin-danger);
+    font-size: 0.9rem;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+}
+
+/* Layout */
+.admin-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.admin-sidebar {
+    width: 350px;
+    background: var(--admin-surface);
+    border-right: 1px solid var(--admin-border);
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--admin-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-sidebar-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.admin-user-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.admin-user-item {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--admin-border);
+    cursor: pointer;
+    transition: background 0.2s;
+    gap: 12px;
+}
+
+.admin-user-item:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-user-item.selected {
+    background: rgba(139, 92, 246, 0.1);
+    border-left: 3px solid var(--admin-primary);
+}
+
+.admin-user-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--admin-border);
+}
+
+.admin-user-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin-user-info strong {
+    font-size: 0.95rem;
+    color: white;
+}
+
+.admin-user-info span {
+    font-size: 0.8rem;
+    color: var(--admin-text-dim);
+}
+
+.admin-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+
+.badge-banned {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--admin-danger);
+}
+
+.badge-warn {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--admin-warn);
+}
+
+/* Main Content */
+.admin-main {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--admin-bg);
+}
+
+.admin-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--admin-text-dim);
+    font-size: 1.1rem;
+}
+
+.admin-profile-detail {
+    padding: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.admin-profile-header {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.admin-detail-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 16px;
+    object-fit: cover;
+}
+
+.admin-detail-title {
+    flex: 1;
+}
+
+.admin-detail-title h1 {
+    margin: 0 0 8px 0;
+    font-size: 2rem;
+    color: white;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.admin-detail-title h1 span {
+    font-size: 1.1rem;
+    color: var(--admin-text-dim);
+    font-weight: 400;
+}
+
+.admin-detail-title p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    color: var(--admin-text-dim);
+    font-family: monospace;
+}
+
+/* Actions */
+.admin-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-admin {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    color: white;
+}
+
+.btn-ban {
+    background: #b91c1c;
+}
+
+.btn-ban:hover {
+    background: #991b1b;
+}
+
+.btn-unban {
+    background: #166534;
+}
+
+.btn-unban:hover {
+    background: #14532d;
+}
+
+.btn-warn {
+    background: #d97706;
+}
+
+.btn-warn:hover {
+    background: #b45309;
+}
+
+.btn-delete {
+    background: transparent;
+    border: 1px solid #7f1d1d;
+    color: #fca5a5;
+}
+
+.btn-delete:hover {
+    background: #7f1d1d;
+    color: white;
+}
+
+/* Status Banners */
+.admin-status-banner {
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.admin-status-banner p {
+    margin: 8px 0 0 0;
+}
+
+.banner-banned {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+.banner-warned {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fcd34d;
+}
+
+/* Data Grid */
+.admin-profile-data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.admin-data-card {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.admin-data-card h3 {
+    margin: 0 0 16px 0;
+    color: white;
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--admin-border);
+    padding-bottom: 10px;
+}
+
+.admin-data-card p {
+    margin: 8px 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.admin-data-card strong {
+    color: var(--admin-text-dim);
+    display: inline-block;
+    width: 80px;
+}
+
+/* Modals */
+.admin-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.admin-modal {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: 16px;
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.admin-modal h2 {
+    margin: 0 0 20px 0;
+    color: white;
+}
+
+.admin-danger-text {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    font-weight: 600;
+}
+
+.admin-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-input-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.admin-input-group textarea {
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    padding: 12px;
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.admin-input-group textarea:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+}
+
+.admin-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btn-admin-cancel {
+    background: transparent;
+    color: var(--admin-text);
+    border: 1px solid var(--admin-border);
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-admin-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+}

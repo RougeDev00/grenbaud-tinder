@@ -1,0 +1,270 @@
+import React, { useState } from 'react';
+import type { Profile } from '../types';
+import { calculateCompatibility } from '../utils/compatibility';
+import { getStoredCompatibility, getCompatibilityCacheKey, getCachedCompatibility } from '../services/aiService';
+import './ProfileCard.css';
+
+interface ProfileCardProps {
+    profile: Profile;
+    currentUser?: Profile;
+    onOpenProfile?: () => void;
+}
+
+const ARCHETYPES_MAP: Record<string, string> = {
+    'INTJ': "Il Progettista", 'INTP': "Il Teorico", 'ENTJ': "Il Condottiero", 'ENTP': "L'Innovatore",
+    'INFJ': "Il Consigliere", 'INFP': "L'Idealista", 'ENFJ': "Il Mentore", 'ENFP': "L'Ispiratore",
+    'ISTJ': "Il Custode", 'ISFJ': "Il Protettore", 'ESTJ': "L'Amministratore", 'ESFJ': "L'Ospite",
+    'ISTP': "Il Tecnico", 'ISFP': "L'Artista", 'ESTP': "Il Dinamico", 'ESFP': "L'Animatore",
+};
+
+const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenProfile }) => {
+    // State for score and estimation status
+    const [matchScore, setMatchScore] = useState<number | null>(null);
+    const [isEstimated, setIsEstimated] = useState(true);
+
+    React.useEffect(() => {
+        if (!currentUser || !profile) return;
+
+        // 1. Initial Synchronous Check (Cache) to avoid flash
+        const cacheKey = getCompatibilityCacheKey(currentUser.id, profile.id);
+        const cached = getCachedCompatibility(cacheKey);
+
+        if (cached) {
+            setMatchScore(cached.score);
+            setIsEstimated(false);
+        } else {
+            // Default to estimated calculation immediately
+            const estimated = calculateCompatibility(currentUser, profile);
+            setMatchScore(estimated);
+            setIsEstimated(true);
+
+            // 2. Async Check (Database)
+            // Only if we don't have a cached final score, or if we want to ensure freshness
+            const fetchStored = async () => {
+                if (!currentUser?.id || !profile?.id) return;
+
+                // Use UUIDs for DB lookup if possible, or whatever getStoredCompatibility expects
+                // getStoredCompatibility currently uses twitch_id for cache keys...
+                // But wait, my recent change to getStoredCompatibility used ID (UUID) for DB query.
+                // WE MUST BE CAREFUL: currentUser.id is the UUID. ProfileCard usually receives full Profile objects.
+
+                const stored = await getStoredCompatibility(currentUser.id, profile.id);
+                if (stored) {
+                    setMatchScore(stored.score);
+                    setIsEstimated(false);
+                }
+            };
+            fetchStored();
+        }
+    }, [currentUser, profile]);
+    const photos = [profile.photo_1, profile.photo_2, profile.photo_3].filter(Boolean);
+    const [currentPhoto, setCurrentPhoto] = useState(0);
+    const [isCenterHovered, setIsCenterHovered] = useState(false);
+
+    // Key processing
+    const rawType = profile.personality_type || '';
+    const baseType = rawType.split('-')[0].trim().toUpperCase();
+
+    const personalityBadgeColors: Record<string, string> = {
+        'INTJ': '#6d5dfc', 'INTP': '#6d5dfc', 'ENTJ': '#6d5dfc', 'ENTP': '#6d5dfc',
+        'INFJ': '#2ecc71', 'INFP': '#2ecc71', 'ENFJ': '#2ecc71', 'ENFP': '#2ecc71',
+        'ISTJ': '#3498db', 'ISFJ': '#3498db', 'ESTJ': '#3498db', 'ESFJ': '#3498db',
+        'ISTP': '#e67e22', 'ISFP': '#e67e22', 'ESTP': '#ff00ff', 'ESFP': '#e67e22',
+    };
+
+
+    const getZone = (e: React.MouseEvent | React.TouchEvent, rect: DOMRect) => {
+        const clientX = 'touches' in e ? (e as any).touches[0].clientX : (e as React.MouseEvent).clientX;
+        const x = clientX - rect.left;
+        const width = rect.width;
+
+        if (x < width * 0.3) return 'left';
+        if (x > width * 0.7) return 'right';
+        return 'center';
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const zone = getZone(e, rect);
+        setIsCenterHovered(zone === 'center');
+    };
+
+    const handleMouseLeave = () => {
+        setIsCenterHovered(false);
+    };
+
+    const handlePhotoTap = (e: React.MouseEvent | React.TouchEvent) => {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const clientY = 'touches' in e ? (e as any).changedTouches[0].clientY : (e as React.MouseEvent).clientY;
+
+        const relativeY = clientY - rect.top;
+        const photoHeight = rect.width * (4 / 3);
+
+        if (relativeY > photoHeight) {
+            onOpenProfile?.();
+            return;
+        }
+
+        const zone = getZone(e, rect);
+
+        if (zone === 'left') {
+            setCurrentPhoto(prev => Math.max(0, prev - 1));
+        } else if (zone === 'right') {
+            setCurrentPhoto(prev => Math.min(photos.length - 1, prev + 1));
+        } else {
+            onOpenProfile?.();
+        }
+    };
+
+    // Parse Hobbies
+    const hobbiesList = profile.hobbies ? profile.hobbies.split(',').map(h => h.trim()).slice(0, 3) : [];
+
+    // Extract dynamic keywords (Artists, Streamers, etc.)
+    const keywords: string[] = [];
+    if (profile.music_artists) {
+        profile.music_artists.split(',').map(s => s.trim()).filter(Boolean).slice(0, 1).forEach(k => keywords.push(k));
+    }
+    if (profile.twitch_streamers) {
+        profile.twitch_streamers.split(',').map(s => s.trim()).filter(Boolean).slice(0, 1).forEach(k => keywords.push(k));
+    }
+    if (profile.youtube_channels) {
+        profile.youtube_channels.split(',').map(s => s.trim()).filter(Boolean).slice(0, 1).forEach(k => keywords.push(k));
+    }
+
+    // Filter out duplicates and limit
+    const uniqueKeywords = Array.from(new Set([...keywords, ...hobbiesList])).slice(0, 4);
+
+    // Parse Zodiac (take only icon + name if needed, or just first word)
+    const zodiac = profile.zodiac_sign ? profile.zodiac_sign.split(' ')[0] : '';
+
+    // Determine Badge Style
+    const getBadgeStyle = (score: number, estimated: boolean) => {
+        // Estimated Scores: Neutral, Provisional Icon
+        if (estimated) {
+            return {
+                tier: 'estimated',
+                icon: '🔮',
+                label: 'Stimata'
+            };
+        }
+
+        // Final Scores: Premium Tiers
+        if (score >= 90) return {
+            tier: 'titan',
+            icon: '🚀', // Only for Verified Titan
+            label: 'Titanico'
+        };
+        if (score >= 80) return {
+            tier: 'high',
+            icon: '🔥',
+            label: 'Alto'
+        };
+        if (score >= 60) return {
+            tier: 'good',
+            icon: '✨',
+            label: 'Buono'
+        };
+        return {
+            tier: 'mid',
+            icon: '🧊',
+            label: 'Neutro'
+        };
+    };
+
+    const badgeStyle = matchScore !== null ? getBadgeStyle(matchScore, isEstimated) : null;
+
+    return (
+        <div className={`profile-card ${isCenterHovered ? 'is-center-hovered' : ''}`} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+            <div className="profile-card-photos" onClick={handlePhotoTap}>
+                {photos.length > 1 && (
+                    <div className="photo-dots">
+                        {photos.map((_, i) => (
+                            <div
+                                key={i}
+                                className={`photo-dot ${i === currentPhoto ? 'photo-dot--active' : ''}`}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* Stacked Images for Instant Switching */}
+                {photos.map((photo, index) => (
+                    <img
+                        key={index}
+                        src={photo}
+                        alt={`${profile.display_name} ${index + 1}`}
+                        className={`profile-card-photo ${index === currentPhoto ? 'active' : ''}`}
+                        draggable={false}
+                        style={{
+                            opacity: index === currentPhoto ? 1 : 0,
+                            zIndex: index === currentPhoto ? 2 : 1,
+                            transition: 'opacity 0.2s ease-in-out'
+                        }}
+                        loading="eager"
+                        decoding="async"
+                    />
+                ))}
+
+                {matchScore !== null && badgeStyle && (
+                    <div className={`match-badge match-tier-${badgeStyle.tier}`}>
+                        <span className="match-icon">{badgeStyle.icon}</span>
+                        <span className="match-percent">{isEstimated ? '~' : ''}{matchScore}%</span>
+                    </div>
+                )}
+
+                <div className="profile-card-gradient" />
+
+                {/* View Profile Overlay - Triggered by center hover */}
+                <div className="profile-card-center-overlay">
+                    <span>Vedi Profilo</span>
+                </div>
+
+                <div className="profile-card-overlay">
+                    {/* Name & Zodiac */}
+                    <div className="profile-card-name-row">
+                        <h2 className="profile-card-name">{profile.display_name}{profile.age ? `, ${profile.age}` : ''}</h2>
+                        {zodiac && <span className="profile-card-zodiac">{zodiac}</span>}
+                    </div>
+
+                    {/* Badges: Gender & Looking For */}
+                    <div className="profile-card-badges">
+                        {profile.gender && (
+                            <span className={`card-badge card-badge--gender`}>
+                                {profile.gender === 'Maschio' ? '♂' : profile.gender === 'Femmina' ? '♀' : '⚧'} {profile.gender}
+                                {profile.city && <span style={{ opacity: 0.8, marginLeft: '6px' }}>• {profile.city}</span>}
+                            </span>
+                        )}
+                        {profile.looking_for && (
+                            <span className="card-badge card-badge--looking">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                                {profile.looking_for}
+                            </span>
+                        )}
+                        {profile.personality_type && (
+                            <span
+                                className={`card-badge card-badge--personality`}
+                                style={{ backgroundColor: personalityBadgeColors[baseType] || '#6B7280' }}
+                            >
+                                ✨ {baseType === 'ESTP' ? "Il Dinamico" : (ARCHETYPES_MAP[baseType] || baseType)}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Bio Preview */}
+                    {profile.bio && <p className="profile-card-bio-preview">{profile.bio}</p>}
+
+                    {/* Dynamic Keywords Chips */}
+                    {uniqueKeywords.length > 0 && (
+                        <div className="profile-card-hobbies">
+                            {uniqueKeywords.map((keyword, i) => (
+                                <span key={i} className="hobby-chip">{keyword}</span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default ProfileCard;
