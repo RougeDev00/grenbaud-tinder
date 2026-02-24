@@ -17,6 +17,7 @@ import Inbox from './components/Chat/Inbox';
 import ChatWindow from './components/Chat/ChatWindow';
 import OnboardingTutorial from './components/OnboardingTutorial';
 import UpdateModal, { useUpdateModal } from './components/UpdateModal';
+import InstallPrompt from './components/InstallPrompt';
 import { markConversationRead, subscribeToMessages, getTotalUnreadCount } from './services/chatService';
 import { getProfile } from './services/profileService';
 import { getTotalEventUnreadCount } from './services/eventService';
@@ -568,6 +569,8 @@ const AppContent: React.FC = () => {
       {showTutorial && (
         <OnboardingTutorial onComplete={() => setShowTutorial(false)} />
       )}
+      {/* iOS Install Prompt */}
+      <InstallPrompt />
       {/* Main Content */}
       <main className="app-main">
         <div className="main-spotlight" />
