@@ -27,11 +27,13 @@
 
 /* Header - Solid and always visible */
 .chat-header {
-    height: 64px;
-    min-height: 64px;
+    height: calc(64px + env(safe-area-inset-top, 0px));
+    min-height: calc(64px + env(safe-area-inset-top, 0px));
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     padding: 0 16px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: 10px;
     background: #161625;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 10;
@@ -332,6 +334,7 @@
 
     .chat-input-area {
         padding: 10px 12px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
         gap: 8px;
     }
 
