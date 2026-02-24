@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import type { Profile, EsploraPostWithProfile } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteProfile, updateProfile } from '../services/profileService';
@@ -112,6 +112,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
     const [activeTab, setActiveTab] = useState<'profile' | 'posts'>('profile');
     const [userPosts, setUserPosts] = useState<EsploraPostWithProfile[]>([]);
     const [loadingPosts, setLoadingPosts] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [lockedWidth, setLockedWidth] = useState<number | null>(null);
 
 
     // Edit state
@@ -416,8 +418,19 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
     const [heroIndex, setHeroIndex] = useState(0);
 
 
+    // Lock container width after first paint to prevent ANY layout shift
+    useLayoutEffect(() => {
+        if (containerRef.current && lockedWidth === null) {
+            setLockedWidth(containerRef.current.offsetWidth);
+        }
+    });
+
     return (
-        <div className="profile-view">
+        <div
+            className="profile-view"
+            ref={containerRef}
+            style={lockedWidth ? { width: `${lockedWidth}px`, maxWidth: `${lockedWidth}px` } : undefined}
+        >
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
 
 
