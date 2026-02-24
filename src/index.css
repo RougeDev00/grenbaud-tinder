@@ -576,8 +576,7 @@ textarea.input-field {
 
 @supports (padding: max(0px)) {
   body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Only horizontal safe areas on body — vertical handled by fixed header/navbar */
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
