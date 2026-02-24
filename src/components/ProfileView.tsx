@@ -558,7 +558,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
 
             {activeTab === 'posts' ? (
                 /* ── Posts Tab ── */
-                <div className="profile-view-card" style={{ padding: '0 2px' }}>
+                <div className="profile-view-card">
                     <div className="profile-posts-tab">
                         {loadingPosts ? (
                             <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.4)' }}>
