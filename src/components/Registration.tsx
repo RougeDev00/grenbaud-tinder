@@ -96,7 +96,7 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
         citySearchTimeoutInfo.current = setTimeout(async () => {
             try {
                 // Search for cities in Italy using Nominatim (OpenStreetMap)
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=it&featureType=city,town,village&limit=5`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=it&featureType=city,town,village&limit=5&accept-language=it`, { headers: { 'Accept-Language': 'it' } });
                 const data = await res.json();
 
                 const suggestions = data.map((item: any) => ({
