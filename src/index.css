@@ -71,8 +71,7 @@ html {
 }
 
 html {
-  scrollbar-gutter: stable;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 body {
@@ -589,6 +588,22 @@ textarea.input-field {
 /* Prevent pull-to-refresh on mobile */
 html {
   overscroll-behavior-y: contain;
+}
+
+/* Prevent bounce in standalone PWA mode */
+@media all and (display-mode: standalone) {
+
+  html,
+  body {
+    overscroll-behavior: none;
+    overflow: hidden;
+  }
+
+  #root {
+    overflow-y: auto;
+    height: 100dvh;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .scroll-container {
