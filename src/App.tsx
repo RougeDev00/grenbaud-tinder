@@ -48,9 +48,19 @@ const AppContent: React.FC = () => {
 
     const checkSub = async () => {
       setSubCheckStatus('checking');
+
+      // Broadcaster whitelist — always allow grenbaud (channel owner)
+      const twitchUsername = user.user_metadata?.user_name?.toLowerCase()
+        || user.user_metadata?.preferred_username?.toLowerCase()
+        || '';
+      if (twitchUsername === 'grenbaud') {
+        console.log('[SubCheck] Broadcaster whitelisted:', twitchUsername);
+        setSubCheckStatus('subscribed');
+        return;
+      }
+
       if (!providerToken) {
         console.warn('[SubCheck] No provider token available — cannot check subscription');
-        // If we don't have the token, we need user to re-login
         setSubCheckStatus('not_subscribed');
         return;
       }
