@@ -39,6 +39,7 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
     const [saving, setSaving] = useState(false);
     const [tosAccepted, setTosAccepted] = useState(false);
     const [personalityType, setPersonalityType] = useState(profile?.personality_type || '');
+    const [personalityScores, setPersonalityScores] = useState<{ mind: number; energy: number; nature: number; tactics: number; identity: number } | null>(null);
 
     // Initialize with existing profile data if available (except photos)
     const [photos, setPhotos] = useState<string[]>(['', '', '']);
@@ -322,6 +323,13 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
                     instagram,
                     looking_for: lookingFor,
                     personality_type: personalityType,
+                    ...(personalityScores ? {
+                        personality_mind: personalityScores.mind,
+                        personality_energy: personalityScores.energy,
+                        personality_nature: personalityScores.nature,
+                        personality_tactics: personalityScores.tactics,
+                        personality_identity: personalityScores.identity,
+                    } : {}),
                     gender: GENDER_LABEL_TO_CODE[gender] || gender,
                     age: parseInt(age) || undefined,
                     city,
@@ -808,8 +816,9 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
                 {/* ===== Step 6: Personality Quiz ===== */}
                 {step === 6 && (
                     <PersonalityQuiz
-                        onComplete={(type, _, answers) => {
+                        onComplete={(type, scores, answers) => {
                             setPersonalityType(type);
+                            setPersonalityScores(scores);
                             setPersonalityAnswers(answers);
                             setStep(7);
                         }}

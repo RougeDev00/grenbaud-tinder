@@ -863,7 +863,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
 
                 {/* Detailed Personality Results (Visible to all if they exist) */}
                 {
-                    profile.personality_type && profile.personality_mind !== undefined && (
+                    profile.personality_type && profile.personality_mind != null && (
                         <div className="personality-details glass-card animate-fade-in">
                             <div className="personality-header">
                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
