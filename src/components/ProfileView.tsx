@@ -556,316 +556,313 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
                 </button>
             </div>
 
-            {activeTab === 'posts' ? (
-                /* ── Posts Tab ── */
-                <div className="profile-view-card">
-                    <div className="profile-posts-tab">
-                        {loadingPosts ? (
-                            <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.4)' }}>
-                                Caricamento post...
-                            </div>
-                        ) : userPosts.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                                <div style={{ fontSize: '2.5rem', marginBottom: '12px', opacity: 0.5 }}>📝</div>
-                                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>
-                                    {profile.id === currentUser?.id ? 'Non hai ancora pubblicato nessun post.' : 'Nessun post pubblicato.'}
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="profile-posts-list">
-                                {userPosts.map(post => (
-                                    <div id={`profile-post-${post.id}`} key={post.id}>
-                                        <ThreadPost
-                                            post={post}
-                                            currentUserId={currentUser?.id || profile.id}
-                                            onLike={() => {
-                                                getUserPosts(profile.id, currentUser?.id || profile.id).then(setUserPosts);
-                                            }}
-                                            onDelete={() => {
-                                                setUserPosts(prev => prev.filter(p => p.id !== post.id));
-                                            }}
-                                            onImageClick={(url) => window.open(url, '_blank')}
-                                            onProfileClick={(userId) => {
-                                                window.location.href = `/profile?view=${userId}`;
-                                            }}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+            {/* ── Posts Tab ── always rendered, toggled with display */}
+            <div className="profile-view-card" style={{ display: activeTab === 'posts' ? 'block' : 'none' }}>
+                <div className="profile-posts-tab">
+                    {loadingPosts ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.4)' }}>
+                            Caricamento post...
+                        </div>
+                    ) : userPosts.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '12px', opacity: 0.5 }}>📝</div>
+                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>
+                                {profile.id === currentUser?.id ? 'Non hai ancora pubblicato nessun post.' : 'Nessun post pubblicato.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="profile-posts-list">
+                            {userPosts.map(post => (
+                                <div id={`profile-post-${post.id}`} key={post.id}>
+                                    <ThreadPost
+                                        post={post}
+                                        currentUserId={currentUser?.id || profile.id}
+                                        onLike={() => {
+                                            getUserPosts(profile.id, currentUser?.id || profile.id).then(setUserPosts);
+                                        }}
+                                        onDelete={() => {
+                                            setUserPosts(prev => prev.filter(p => p.id !== post.id));
+                                        }}
+                                        onImageClick={(url) => window.open(url, '_blank')}
+                                        onProfileClick={(userId) => {
+                                            window.location.href = `/profile?view=${userId}`;
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
+            </div>
 
+            {/* ── Profile Tab ── always rendered, toggled with display */}
+            <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}>
+                <div className="profile-view-card glass-card">
+                    {isEditing ? (
+                        <ProfileEditForm
+                            displayName={displayName} setDisplayName={setDisplayName}
+                            age={age} setAge={setAge}
+                            city={city} setCity={setCity}
+                            bio={bio} setBio={setBio}
+                            hobbies={hobbies} setHobbies={setHobbies}
+                            music={music} setMusic={setMusic}
+                            musicArtists={musicArtists} setMusicArtists={setMusicArtists}
+                            youtube={youtube} setYoutube={setYoutube}
+                            youtubeChannels={youtubeChannels} setYoutubeChannels={setYoutubeChannels}
+                            twitchWatches={twitchWatches} setTwitchWatches={setTwitchWatches}
+                            twitchStreamers={twitchStreamers} setTwitchStreamers={setTwitchStreamers}
+                            grenbaudIs={grenbaudIs} setGrenbaudIs={setGrenbaudIs}
+                            freeTime={freeTime} setFreeTime={setFreeTime}
+                            questionDream={questionDream} setQuestionDream={setQuestionDream}
+                            questionWeekend={questionWeekend} setQuestionWeekend={setQuestionWeekend}
+                            questionRedflag={questionRedflag} setQuestionRedflag={setQuestionRedflag}
+                            instagram={instagram} setInstagram={setInstagram}
+                            gender={gender} setGender={setGender}
+                            lookingFor={lookingFor} setLookingFor={setLookingFor}
+                            zodiac={zodiac} setZodiac={setZodiac}
+                        />
+                    ) : (
+                        <>
+                            {readOnly && currentUser && currentUser.id !== profile.id && (
+                                <CompatibilityCard profile={profile} currentUser={currentUser} />
+                            )}
 
-            ) : (
-                <>
-                    <div className="profile-view-card glass-card">
-                        {isEditing ? (
-                            <ProfileEditForm
-                                displayName={displayName} setDisplayName={setDisplayName}
-                                age={age} setAge={setAge}
-                                city={city} setCity={setCity}
-                                bio={bio} setBio={setBio}
-                                hobbies={hobbies} setHobbies={setHobbies}
-                                music={music} setMusic={setMusic}
-                                musicArtists={musicArtists} setMusicArtists={setMusicArtists}
-                                youtube={youtube} setYoutube={setYoutube}
-                                youtubeChannels={youtubeChannels} setYoutubeChannels={setYoutubeChannels}
-                                twitchWatches={twitchWatches} setTwitchWatches={setTwitchWatches}
-                                twitchStreamers={twitchStreamers} setTwitchStreamers={setTwitchStreamers}
-                                grenbaudIs={grenbaudIs} setGrenbaudIs={setGrenbaudIs}
-                                freeTime={freeTime} setFreeTime={setFreeTime}
-                                questionDream={questionDream} setQuestionDream={setQuestionDream}
-                                questionWeekend={questionWeekend} setQuestionWeekend={setQuestionWeekend}
-                                questionRedflag={questionRedflag} setQuestionRedflag={setQuestionRedflag}
-                                instagram={instagram} setInstagram={setInstagram}
-                                gender={gender} setGender={setGender}
-                                lookingFor={lookingFor} setLookingFor={setLookingFor}
-                                zodiac={zodiac} setZodiac={setZodiac}
-                            />
-                        ) : (
-                            <>
-                                {readOnly && currentUser && currentUser.id !== profile.id && (
-                                    <CompatibilityCard profile={profile} currentUser={currentUser} />
-                                )}
-
-                                <div className="profile-view-name-row">
-                                    <div className="profile-identity-block">
-                                        {profile.twitch_username && (
-                                            <a
-                                                href={`https://twitch.tv/${profile.twitch_username}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="profile-twitch-badge"
-                                            >
-                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" /></svg>
-                                                @{profile.twitch_username}
-                                            </a>
-                                        )}
-                                        <h3 className="profile-identity-name">
-                                            {profile.display_name}
-                                            {profile.age && <span className="profile-identity-age">{profile.age}</span>}
-                                        </h3>
-                                    </div>
-                                    {profile.ai_summary && (
-                                        <button
-                                            className={`btn-toggle-details ${!showDetails ? 'collapsed' : ''}`}
-                                            onClick={() => setShowDetails(!showDetails)}
-                                            title={showDetails ? "Nascondi dettagli e mostra solo AI" : "Mostra tutti i dettagli"}
+                            <div className="profile-view-name-row">
+                                <div className="profile-identity-block">
+                                    {profile.twitch_username && (
+                                        <a
+                                            href={`https://twitch.tv/${profile.twitch_username}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="profile-twitch-badge"
                                         >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <polyline points="18 15 12 9 6 15"></polyline>
-                                            </svg>
-                                        </button>
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" /></svg>
+                                            @{profile.twitch_username}
+                                        </a>
                                     )}
+                                    <h3 className="profile-identity-name">
+                                        {profile.display_name}
+                                        {profile.age && <span className="profile-identity-age">{profile.age}</span>}
+                                    </h3>
                                 </div>
-                                <div className="profile-view-chips-row">
-                                    {profile.gender && (() => {
-                                        const genderLabel: Record<string, string> = { 'M': 'Maschio', 'F': 'Femmina', 'N/S': 'Non specificato' };
-                                        const label = genderLabel[profile.gender] || profile.gender;
-                                        const icon = profile.gender === 'M' || profile.gender === 'Maschio' ? '♂' : profile.gender === 'F' || profile.gender === 'Femmina' ? '♀' : '⚧';
-                                        return <span className="chip chip--gender">{icon} {label}</span>;
-                                    })()}
-                                    {profile.city && (
-                                        <span className="chip chip--city">📍 {profile.city}</span>
-                                    )}
-                                    {profile.zodiac_sign && (
-                                        <span className="chip chip--zodiac">{profile.zodiac_sign}</span>
-                                    )}
-                                    {profile.personality_type && (
-                                        <span className="chip chip--archetype">
-                                            {ARCHETYPES[profile.personality_type.split('-')[0]]?.title || profile.personality_type}
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* AI Summary Moved Here */}
                                 {profile.ai_summary && (
-                                    <div className="profile-section profile-section--ai" style={{ marginBottom: '24px' }}>
-                                        <div className="ai-ultra-header-wrapper">
-                                            <div className="ai-ultra-animated-border"></div>
-                                            <div className="ai-ultra-header">
-                                                <div className="ai-ultra-brand">
-                                                    <div className="ai-ultra-badge" style={{ alignSelf: 'flex-start' }}>
-                                                        <span className="sparkle-icon">✨</span>
-                                                        <span className="badge-text" style={{ fontSize: '0.65rem' }}>AI Powered</span>
-                                                    </div>
-                                                    <div className="ai-ultra-text" style={{ paddingRight: '8px' }}>
-                                                        <h3 className="ai-ultra-title" style={{ fontSize: '1.2rem' }}>Riassunto AI</h3>
-                                                    </div>
+                                    <button
+                                        className={`btn-toggle-details ${!showDetails ? 'collapsed' : ''}`}
+                                        onClick={() => setShowDetails(!showDetails)}
+                                        title={showDetails ? "Nascondi dettagli e mostra solo AI" : "Mostra tutti i dettagli"}
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="18 15 12 9 6 15"></polyline>
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+                            <div className="profile-view-chips-row">
+                                {profile.gender && (() => {
+                                    const genderLabel: Record<string, string> = { 'M': 'Maschio', 'F': 'Femmina', 'N/S': 'Non specificato' };
+                                    const label = genderLabel[profile.gender] || profile.gender;
+                                    const icon = profile.gender === 'M' || profile.gender === 'Maschio' ? '♂' : profile.gender === 'F' || profile.gender === 'Femmina' ? '♀' : '⚧';
+                                    return <span className="chip chip--gender">{icon} {label}</span>;
+                                })()}
+                                {profile.city && (
+                                    <span className="chip chip--city">📍 {profile.city}</span>
+                                )}
+                                {profile.zodiac_sign && (
+                                    <span className="chip chip--zodiac">{profile.zodiac_sign}</span>
+                                )}
+                                {profile.personality_type && (
+                                    <span className="chip chip--archetype">
+                                        {ARCHETYPES[profile.personality_type.split('-')[0]]?.title || profile.personality_type}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* AI Summary Moved Here */}
+                            {profile.ai_summary && (
+                                <div className="profile-section profile-section--ai" style={{ marginBottom: '24px' }}>
+                                    <div className="ai-ultra-header-wrapper">
+                                        <div className="ai-ultra-animated-border"></div>
+                                        <div className="ai-ultra-header">
+                                            <div className="ai-ultra-brand">
+                                                <div className="ai-ultra-badge" style={{ alignSelf: 'flex-start' }}>
+                                                    <span className="sparkle-icon">✨</span>
+                                                    <span className="badge-text" style={{ fontSize: '0.65rem' }}>AI Powered</span>
                                                 </div>
-
-                                                <div className="ai-ultra-actions" style={{ position: 'relative', zIndex: 10 }}>
-
-                                                    <button
-                                                        className={`btn-ai-ultra-toggle ${isSummaryExpanded ? 'expanded' : ''}`}
-                                                        onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
-                                                        aria-label={isSummaryExpanded ? 'Riduci' : 'Espandi'}
-                                                        style={{ width: '32px', height: '32px', padding: 0 }}
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                            <polyline points="6 9 12 15 18 9"></polyline>
-                                                        </svg>
-                                                    </button>
+                                                <div className="ai-ultra-text" style={{ paddingRight: '8px' }}>
+                                                    <h3 className="ai-ultra-title" style={{ fontSize: '1.2rem' }}>Riassunto AI</h3>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className={`collapsible-summary ${isSummaryExpanded ? 'expanded' : 'collapsed'}`}>
-                                            <p className="profile-section-value" style={{ whiteSpace: 'pre-wrap', paddingLeft: 0, marginTop: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem' }}>
-                                                {profile.ai_summary}
-                                            </p>
+
+                                            <div className="ai-ultra-actions" style={{ position: 'relative', zIndex: 10 }}>
+
+                                                <button
+                                                    className={`btn-ai-ultra-toggle ${isSummaryExpanded ? 'expanded' : ''}`}
+                                                    onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
+                                                    aria-label={isSummaryExpanded ? 'Riduci' : 'Espandi'}
+                                                    style={{ width: '32px', height: '32px', padding: 0 }}
+                                                >
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                )}
-
-
-
-                                <div className={`profile-view-sections ${!showDetails ? 'hidden' : ''}`}>
-                                    <ProfileBioSection profile={profile} />
-
-                                    {profile.personality_type ? (
-                                        <Section
-                                            iconKey="personality"
-                                            label="Personalità MBTI"
-                                            value={ARCHETYPES[profile.personality_type.split('-')[0]]?.title || profile.personality_type}
-                                        />
-                                    ) : (
-                                        readOnly && (
-                                            <Section
-                                                iconKey="personality"
-                                                label="Personalità MBTI"
-                                                value="L'utente non ha ancora effettuato il test delle personalità"
-                                            />
-                                        )
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Personality Test CTA or Results - Moved to bottom */}
-                    {
-                        !readOnly && !isEditing ? (
-                            <div className="personality-cta glass-card animate-fade-in">
-                                <div className="personality-cta-content">
-                                    <div className="personality-cta-icon">✨</div>
-                                    <div>
-                                        <h4>Test della Personalità</h4>
-                                        <p>
-                                            {profile.personality_type
-                                                ? `Sei un ${ARCHETYPES[profile.personality_type.split('-')[0]]?.title || profile.personality_type}. Rifallo per aggiornare il tuo profilo!`
-                                                : 'Scopri il tuo profilo MBTI per trovare persone più compatibili!'}
+                                    <div className={`collapsible-summary ${isSummaryExpanded ? 'expanded' : 'collapsed'}`}>
+                                        <p className="profile-section-value" style={{ whiteSpace: 'pre-wrap', paddingLeft: 0, marginTop: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem' }}>
+                                            {profile.ai_summary}
                                         </p>
                                     </div>
                                 </div>
-                                <button className="btn btn-primary" onClick={() => setIsQuizOpen(true)}>
-                                    {profile.personality_type ? 'Rifai il Test' : 'Inizia il Test'}
-                                </button>
+                            )}
+
+
+
+                            <div className={`profile-view-sections ${!showDetails ? 'hidden' : ''}`}>
+                                <ProfileBioSection profile={profile} />
+
+                                {profile.personality_type ? (
+                                    <Section
+                                        iconKey="personality"
+                                        label="Personalità MBTI"
+                                        value={ARCHETYPES[profile.personality_type.split('-')[0]]?.title || profile.personality_type}
+                                    />
+                                ) : (
+                                    readOnly && (
+                                        <Section
+                                            iconKey="personality"
+                                            label="Personalità MBTI"
+                                            value="L'utente non ha ancora effettuato il test delle personalità"
+                                        />
+                                    )
+                                )}
                             </div>
-                        ) : null
-                    }
+                        </>
+                    )}
+                </div>
 
-                    {/* Detailed Personality Results (Visible to all if they exist) */}
-                    {
-                        profile.personality_type && profile.personality_mind !== undefined && (
-                            <div className="personality-details glass-card animate-fade-in">
-                                <div className="personality-header">
-                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-                                        <h3 className="personality-title" style={{ margin: 0 }}>
-                                            {ARCHETYPES[profile.personality_type.split('-')[0]]?.title || profile.personality_type}
-                                        </h3>
-                                        <button
-                                            className={`btn-toggle-details ${!isPersonalityExpanded ? 'collapsed' : ''}`}
-                                            onClick={() => setIsPersonalityExpanded(!isPersonalityExpanded)}
-                                            title={isPersonalityExpanded ? "Nascondi dettagli personalità" : "Mostra dettagli personalità"}
-                                            style={{ position: 'absolute', right: '0', top: '50%', transform: `translateY(-50%) ${!isPersonalityExpanded ? 'rotate(180deg)' : ''}` }}
-                                        >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <polyline points="18 15 12 9 6 15"></polyline>
-                                            </svg>
-                                        </button>
-                                    </div>
-
-                                    <p className="personality-desc" style={{ margin: 0 }}>
-                                        {ARCHETYPES[profile.personality_type.split('-')[0]]?.description}
+                {/* Personality Test CTA or Results - Moved to bottom */}
+                {
+                    !readOnly && !isEditing ? (
+                        <div className="personality-cta glass-card animate-fade-in">
+                            <div className="personality-cta-content">
+                                <div className="personality-cta-icon">✨</div>
+                                <div>
+                                    <h4>Test della Personalità</h4>
+                                    <p>
+                                        {profile.personality_type
+                                            ? `Sei un ${ARCHETYPES[profile.personality_type.split('-')[0]]?.title || profile.personality_type}. Rifallo per aggiornare il tuo profilo!`
+                                            : 'Scopri il tuo profilo MBTI per trovare persone più compatibili!'}
                                     </p>
                                 </div>
-
-                                <div className={`personality-collapsible-content ${!isPersonalityExpanded ? 'hidden' : ''}`}>
-                                    <div className="personality-bars">
-                                        <SimpleResultBar label="Mente" left="Estroverso" right="Introverso" val={profile.personality_mind} color="#4298B4" />
-                                        {/* Energy: Swap logic to match Intuitivo (Left) vs Concreto (Right) */}
-                                        <SimpleResultBar label="Energia" left="Intuitivo" right="Concreto" val={100 - (profile.personality_energy ?? 50)} color="#E4AE3A" />
-                                        <SimpleResultBar label="Natura" left="Razionale" right="Empatico" val={profile.personality_nature} color="#33A474" />
-                                        <SimpleResultBar label="Tattica" left="Organizzato" right="Spontaneo" val={profile.personality_tactics} color="#88619A" />
-                                    </div>
-
-                                    {/* Gamified Radar Chart */}
-                                    <PersonalityRadarChart
-                                        mind={profile.personality_mind}
-                                        energy={profile.personality_energy}
-                                        nature={profile.personality_nature}
-                                        tactics={profile.personality_tactics}
-                                        identity={profile.personality_identity}
-                                        personalityType={profile.personality_type}
-                                    />
-
-                                    {(profile.personality_ai_analysis || localAiAnalysis) && (
-                                        <div className="personality-ai-analysis">
-                                            <div className="personality-ai-analysis-header">
-                                                <span className="personality-ai-header-icon">🧠</span>
-                                                <h4 className="personality-ai-header-title">Analisi Psicologica AI</h4>
-                                            </div>
-                                            <p className="personality-ai-text">
-                                                {localAiAnalysis || profile.personality_ai_analysis}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-
-
-
                             </div>
-                        )
-                    }
+                            <button className="btn btn-primary" onClick={() => setIsQuizOpen(true)}>
+                                {profile.personality_type ? 'Rifai il Test' : 'Inizia il Test'}
+                            </button>
+                        </div>
+                    ) : null
+                }
 
-                    {
-                        isQuizOpen && (
-                            <div className="quiz-overlay">
-                                <div className="quiz-modal glass-card animate-fade-in-up">
-                                    <button className="quiz-close" onClick={() => setIsQuizOpen(false)} aria-label="Close quiz">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                {/* Detailed Personality Results (Visible to all if they exist) */}
+                {
+                    profile.personality_type && profile.personality_mind !== undefined && (
+                        <div className="personality-details glass-card animate-fade-in">
+                            <div className="personality-header">
+                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                                    <h3 className="personality-title" style={{ margin: 0 }}>
+                                        {ARCHETYPES[profile.personality_type.split('-')[0]]?.title || profile.personality_type}
+                                    </h3>
+                                    <button
+                                        className={`btn-toggle-details ${!isPersonalityExpanded ? 'collapsed' : ''}`}
+                                        onClick={() => setIsPersonalityExpanded(!isPersonalityExpanded)}
+                                        title={isPersonalityExpanded ? "Nascondi dettagli personalità" : "Mostra dettagli personalità"}
+                                        style={{ position: 'absolute', right: '0', top: '50%', transform: `translateY(-50%) ${!isPersonalityExpanded ? 'rotate(180deg)' : ''}` }}
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="18 15 12 9 6 15"></polyline>
                                         </svg>
                                     </button>
-                                    <PersonalityQuiz
-                                        onComplete={handleQuizComplete}
-                                        isSaving={saving}
-                                    />
                                 </div>
-                            </div>
-                        )
-                    }
 
-                    {/* Global Loader Overlay */}
-                    {
-                        saving && (
-                            <div style={{
-                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                                backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 999999,
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                backdropFilter: 'blur(8px)'
-                            }}>
-                                <div className="loading-spinner" style={{ width: '60px', height: '60px', border: '5px solid rgba(255,255,255,0.1)', borderTop: '5px solid var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                                <h2 style={{ color: 'white', marginTop: '25px', fontSize: '1.4rem', fontWeight: 600 }}>Analisi AI in corso... 🧠</h2>
-                                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', marginTop: '8px' }}>Stiamo scrivendo il tuo profilo psicologico</p>
+                                <p className="personality-desc" style={{ margin: 0 }}>
+                                    {ARCHETYPES[profile.personality_type.split('-')[0]]?.description}
+                                </p>
                             </div>
-                        )
-                    }
-                </>
-            )}
+
+                            <div className={`personality-collapsible-content ${!isPersonalityExpanded ? 'hidden' : ''}`}>
+                                <div className="personality-bars">
+                                    <SimpleResultBar label="Mente" left="Estroverso" right="Introverso" val={profile.personality_mind} color="#4298B4" />
+                                    {/* Energy: Swap logic to match Intuitivo (Left) vs Concreto (Right) */}
+                                    <SimpleResultBar label="Energia" left="Intuitivo" right="Concreto" val={100 - (profile.personality_energy ?? 50)} color="#E4AE3A" />
+                                    <SimpleResultBar label="Natura" left="Razionale" right="Empatico" val={profile.personality_nature} color="#33A474" />
+                                    <SimpleResultBar label="Tattica" left="Organizzato" right="Spontaneo" val={profile.personality_tactics} color="#88619A" />
+                                </div>
+
+                                {/* Gamified Radar Chart */}
+                                <PersonalityRadarChart
+                                    mind={profile.personality_mind}
+                                    energy={profile.personality_energy}
+                                    nature={profile.personality_nature}
+                                    tactics={profile.personality_tactics}
+                                    identity={profile.personality_identity}
+                                    personalityType={profile.personality_type}
+                                />
+
+                                {(profile.personality_ai_analysis || localAiAnalysis) && (
+                                    <div className="personality-ai-analysis">
+                                        <div className="personality-ai-analysis-header">
+                                            <span className="personality-ai-header-icon">🧠</span>
+                                            <h4 className="personality-ai-header-title">Analisi Psicologica AI</h4>
+                                        </div>
+                                        <p className="personality-ai-text">
+                                            {localAiAnalysis || profile.personality_ai_analysis}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+
+
+
+                        </div>
+                    )
+                }
+
+                {
+                    isQuizOpen && (
+                        <div className="quiz-overlay">
+                            <div className="quiz-modal glass-card animate-fade-in-up">
+                                <button className="quiz-close" onClick={() => setIsQuizOpen(false)} aria-label="Close quiz">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                                <PersonalityQuiz
+                                    onComplete={handleQuizComplete}
+                                    isSaving={saving}
+                                />
+                            </div>
+                        </div>
+                    )
+                }
+
+                {/* Global Loader Overlay */}
+                {
+                    saving && (
+                        <div style={{
+                            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 999999,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            backdropFilter: 'blur(8px)'
+                        }}>
+                            <div className="loading-spinner" style={{ width: '60px', height: '60px', border: '5px solid rgba(255,255,255,0.1)', borderTop: '5px solid var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                            <h2 style={{ color: 'white', marginTop: '25px', fontSize: '1.4rem', fontWeight: 600 }}>Analisi AI in corso... 🧠</h2>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', marginTop: '8px' }}>Stiamo scrivendo il tuo profilo psicologico</p>
+                        </div>
+                    )
+                }
+            </div>
         </div >
     );
 };
