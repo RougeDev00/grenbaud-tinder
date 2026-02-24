@@ -69,33 +69,12 @@ export const checkReciprocalInterest = async (userId: string, actorId: string): 
 
 export const checkMutualAnalysis = async (user1Id: string, user2Id: string): Promise<boolean> => {
     try {
-        // Strategy 1: Check SPY/SPY_RECIPROCAL notifications in both directions
-        const { count: count1, error: error1 } = await supabase
-            .from('notifications')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user1Id)
-            .eq('actor_id', user2Id)
-            .in('type', ['SPY', 'SPY_RECIPROCAL']);
-
-        if (error1) throw error1;
-
-        const { count: count2, error: error2 } = await supabase
-            .from('notifications')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user2Id)
-            .eq('actor_id', user1Id)
-            .in('type', ['SPY', 'SPY_RECIPROCAL']);
-
-        if (error2) throw error2;
-
-        const mutualSpy = (count1 !== null && count1 > 0) && (count2 !== null && count2 > 0);
-        if (mutualSpy) return true;
-
-        // Strategy 2: Check compatibility_scores — BOTH users must have generated independently
+        // ONLY check compatibility_scores — BOTH users must have generated independently
+        // SPY notifications are for user-facing notifications only, NOT for chat access control
         const [user_a, user_b] = [user1Id, user2Id].sort();
 
         // Check if user1 generated a score for this pair
-        const { data: score1, error: err3 } = await supabase
+        const { data: score1, error: err1 } = await supabase
             .from('compatibility_scores')
             .select('id')
             .eq('user_a', user_a)
@@ -103,10 +82,10 @@ export const checkMutualAnalysis = async (user1Id: string, user2Id: string): Pro
             .eq('generated_by', user1Id)
             .maybeSingle();
 
-        if (err3) throw err3;
+        if (err1) throw err1;
 
         // Check if user2 generated a score for this pair
-        const { data: score2, error: err4 } = await supabase
+        const { data: score2, error: err2 } = await supabase
             .from('compatibility_scores')
             .select('id')
             .eq('user_a', user_a)
@@ -114,12 +93,10 @@ export const checkMutualAnalysis = async (user1Id: string, user2Id: string): Pro
             .eq('generated_by', user2Id)
             .maybeSingle();
 
-        if (err4) throw err4;
+        if (err2) throw err2;
 
         // Chat unlocks only when BOTH users have generated
-        if (score1 && score2) return true;
-
-        return false;
+        return !!(score1 && score2);
     } catch (err) {
         console.error('[NotificationService] Error checking mutual analysis:', err);
         return false;

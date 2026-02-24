@@ -1,7 +1,7 @@
 {
   "name": "baudr",
   "private": true,
-  "version": "0.4.5",
+  "version": "0.4.6",
   "restart_trigger": "2026-02-21T17:15",
   "type": "module",
   "scripts": {
