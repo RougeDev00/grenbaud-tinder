@@ -171,20 +171,13 @@
     box-shadow: none;
 }
 
-
 .profile-view {
     padding: 16px 20px 100px;
     max-width: 480px;
     margin: 0 auto;
     width: 100%;
-    box-sizing: border-box;
+    overflow-x: hidden;
     animation: fadeInUp 0.4s ease-out;
-}
-
-/* Ensure all direct children stretch to full width */
-.profile-view>* {
-    width: 100%;
-    box-sizing: border-box;
 }
 
 .profile-view-header {
@@ -263,10 +256,8 @@
 
 /* Posts tab — match profile card dimensions */
 .profile-posts-tab {
-    width: 100%;
-    max-width: 100%;
-    padding: 0 20px;
-    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .profile-posts-list {
