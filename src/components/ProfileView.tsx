@@ -558,41 +558,44 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
 
             {activeTab === 'posts' ? (
                 /* ── Posts Tab ── */
-                <div className="profile-posts-tab">
-                    {loadingPosts ? (
-                        <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.4)' }}>
-                            Caricamento post...
-                        </div>
-                    ) : userPosts.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '12px', opacity: 0.5 }}>📝</div>
-                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>
-                                {profile.id === currentUser?.id ? 'Non hai ancora pubblicato nessun post.' : 'Nessun post pubblicato.'}
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="profile-posts-list">
-                            {userPosts.map(post => (
-                                <div id={`profile-post-${post.id}`} key={post.id}>
-                                    <ThreadPost
-                                        post={post}
-                                        currentUserId={currentUser?.id || profile.id}
-                                        onLike={() => {
-                                            getUserPosts(profile.id, currentUser?.id || profile.id).then(setUserPosts);
-                                        }}
-                                        onDelete={() => {
-                                            setUserPosts(prev => prev.filter(p => p.id !== post.id));
-                                        }}
-                                        onImageClick={(url) => window.open(url, '_blank')}
-                                        onProfileClick={(userId) => {
-                                            window.location.href = `/profile?view=${userId}`;
-                                        }}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                <div className="profile-view-card" style={{ padding: '0 2px' }}>
+                    <div className="profile-posts-tab">
+                        {loadingPosts ? (
+                            <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.4)' }}>
+                                Caricamento post...
+                            </div>
+                        ) : userPosts.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                                <div style={{ fontSize: '2.5rem', marginBottom: '12px', opacity: 0.5 }}>📝</div>
+                                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>
+                                    {profile.id === currentUser?.id ? 'Non hai ancora pubblicato nessun post.' : 'Nessun post pubblicato.'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="profile-posts-list">
+                                {userPosts.map(post => (
+                                    <div id={`profile-post-${post.id}`} key={post.id}>
+                                        <ThreadPost
+                                            post={post}
+                                            currentUserId={currentUser?.id || profile.id}
+                                            onLike={() => {
+                                                getUserPosts(profile.id, currentUser?.id || profile.id).then(setUserPosts);
+                                            }}
+                                            onDelete={() => {
+                                                setUserPosts(prev => prev.filter(p => p.id !== post.id));
+                                            }}
+                                            onImageClick={(url) => window.open(url, '_blank')}
+                                            onProfileClick={(userId) => {
+                                                window.location.href = `/profile?view=${userId}`;
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
+
 
             ) : (
                 <>
