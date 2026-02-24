@@ -300,7 +300,8 @@ const AdminCenter: React.FC = () => {
                             ) : (
                                 <div className="ac-scores-table">
                                     <div className="ac-scores-header">
-                                        <span>Utente</span>
+                                        <span>Con utente</span>
+                                        <span>Generata da</span>
                                         <span>Punteggio</span>
                                         <span>Spiegazione</span>
                                         <span>Data</span>
@@ -314,6 +315,9 @@ const AdminCenter: React.FC = () => {
                                                     <strong>{s.other_display_name}</strong>
                                                     <span>@{s.other_twitch_username}</span>
                                                 </div>
+                                            </div>
+                                            <div className="ac-score-generated-by">
+                                                <span className="ac-generated-badge">{s.generated_by_name}</span>
                                             </div>
                                             <div className="ac-score-value">
                                                 <span className={`ac-score-badge ${s.score >= 70 ? 'high' : s.score >= 40 ? 'mid' : 'low'}`}>

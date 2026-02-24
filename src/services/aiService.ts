@@ -23,11 +23,12 @@ async function callEdgeFunction(body: Record<string, unknown>): Promise<any> {
     return res.json();
 }
 
-// Session storage key
-const CACHE_KEY_PREFIX = 'baudr_compatibility_v7_';
+// Session storage key — v8 uses directional keys (viewer→target)
+const CACHE_KEY_PREFIX = 'baudr_compatibility_v8_';
 
-export const getCompatibilityCacheKey = (id1: string, id2: string) => {
-    return CACHE_KEY_PREFIX + `${id1}-${id2}`;
+// Directional cache key: viewer_id → target_id (NOT sorted)
+export const getCompatibilityCacheKey = (viewerId: string, targetId: string) => {
+    return CACHE_KEY_PREFIX + `${viewerId}-${targetId}`;
 };
 
 export const getCachedCompatibility = (key: string): { score: number, explanation: string } | null => {
@@ -73,30 +74,30 @@ const sortedPair = (id1: string, id2: string): [string, string] =>
     id1 < id2 ? [id1, id2] : [id2, id1];
 
 const setCachedCompatibility = async (
-    id1: string,
-    id2: string,
+    viewerId: string,
+    targetId: string,
     data: { score: number; explanation: string }
 ): Promise<void> => {
     // 1. Always write to localStorage for instant UI feedback
     try {
-        const key = getCompatibilityCacheKey(id1, id2);
+        const key = getCompatibilityCacheKey(viewerId, targetId);
         localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
         console.warn('LocalStorage write failed', e);
     }
 
-    // 2. Persist to Supabase (source of truth)
+    // 2. Persist to Supabase (source of truth) with generated_by
     if (!isSupabaseConfigured) return;
     try {
-        const [user_a, user_b] = sortedPair(id1, id2);
+        const [user_a, user_b] = sortedPair(viewerId, targetId);
         const { error } = await supabase
             .from('compatibility_scores')
             .upsert(
-                { user_a, user_b, score: data.score, explanation: data.explanation },
-                { onConflict: 'user_a,user_b' }
+                { user_a, user_b, generated_by: viewerId, score: data.score, explanation: data.explanation },
+                { onConflict: 'generated_by,user_a,user_b' }
             );
         if (error) console.error('[DB] Error saving compatibility score:', error);
-        else console.log('[DB] Compatibility score saved.');
+        else console.log('[DB] Compatibility score saved for generator:', viewerId);
     } catch (e) {
         console.error('[DB] Exception saving compatibility score:', e);
     }
@@ -230,19 +231,20 @@ Restituisci solo l'analisi, senza introduzioni.
 };
 
 export const getStoredCompatibility = async (
-    id1: string,
-    id2: string
+    viewerId: string,
+    targetId: string
 ): Promise<{ score: number; explanation: string } | null> => {
-    // Always check Supabase (source of truth)
+    // Always check Supabase (source of truth) — query by generated_by
     if (!isSupabaseConfigured) return null;
-    const key = getCompatibilityCacheKey(id1, id2);
+    const key = getCompatibilityCacheKey(viewerId, targetId);
     try {
-        const [user_a, user_b] = sortedPair(id1, id2);
+        const [user_a, user_b] = sortedPair(viewerId, targetId);
         const { data, error } = await supabase
             .from('compatibility_scores')
             .select('score, explanation')
             .eq('user_a', user_a)
             .eq('user_b', user_b)
+            .eq('generated_by', viewerId)
             .maybeSingle();
 
         if (error) {
@@ -250,12 +252,12 @@ export const getStoredCompatibility = async (
             return null;
         }
         if (!data) {
-            // Score was deleted — clear stale localStorage cache
+            // Score was deleted or doesn't exist — clear stale localStorage cache
             try { localStorage.removeItem(key); } catch (_) { /* */ }
             return null;
         }
 
-        // Hydrate localStorage cache so next call is instant
+        // Hydrate localStorage cache
         try {
             localStorage.setItem(key, JSON.stringify(data));
         } catch (_) {/* ignore */ }

@@ -58,6 +58,8 @@ export interface CompatibilityScoreRow {
     other_display_name: string;
     other_twitch_username: string;
     other_avatar: string;
+    generated_by_id: string;
+    generated_by_name: string;
     score: number;
     explanation: string;
     created_at: string;

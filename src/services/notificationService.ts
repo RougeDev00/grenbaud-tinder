@@ -91,19 +91,33 @@ export const checkMutualAnalysis = async (user1Id: string, user2Id: string): Pro
         const mutualSpy = (count1 !== null && count1 > 0) && (count2 !== null && count2 > 0);
         if (mutualSpy) return true;
 
-        // Strategy 2: Check compatibility_scores table (pair is stored with sorted IDs)
+        // Strategy 2: Check compatibility_scores — BOTH users must have generated independently
         const [user_a, user_b] = [user1Id, user2Id].sort();
-        const { data: scoreRow, error: error3 } = await supabase
+
+        // Check if user1 generated a score for this pair
+        const { data: score1, error: err3 } = await supabase
             .from('compatibility_scores')
-            .select('score')
+            .select('id')
             .eq('user_a', user_a)
             .eq('user_b', user_b)
+            .eq('generated_by', user1Id)
             .maybeSingle();
 
-        if (error3) throw error3;
+        if (err3) throw err3;
 
-        // If a score exists between these two users, chat is unlocked
-        if (scoreRow && scoreRow.score !== null) return true;
+        // Check if user2 generated a score for this pair
+        const { data: score2, error: err4 } = await supabase
+            .from('compatibility_scores')
+            .select('id')
+            .eq('user_a', user_a)
+            .eq('user_b', user_b)
+            .eq('generated_by', user2Id)
+            .maybeSingle();
+
+        if (err4) throw err4;
+
+        // Chat unlocks only when BOTH users have generated
+        if (score1 && score2) return true;
 
         return false;
     } catch (err) {
