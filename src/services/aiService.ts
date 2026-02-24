@@ -8,11 +8,15 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 async function callEdgeFunction(body: Record<string, unknown>): Promise<any> {
+    // Send the authenticated user's JWT for server-side verification
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || SUPABASE_ANON_KEY;
+
     const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-ai`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(body),
     });

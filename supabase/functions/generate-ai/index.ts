@@ -1,20 +1,58 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { OpenAI } from "npm:openai@^4.22.0";
-import { corsHeaders } from "../_shared/cors.ts"; // Se non hai cors.ts, lo creiamo o gestiamo CORS qua sotto.
+import { createClient } from "npm:@supabase/supabase-js@^2.95.3";
 
-// Gestione CORS inline per semplicità caso d'uso singolo
-const cors = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins — restrict to production + local dev
+const ALLOWED_ORIGINS = [
+    "https://baudr.fun",
+    "https://www.baudr.fun",
+    "http://localhost:4173",
+    "http://localhost:5173",
+];
+
+function getCorsHeaders(req: Request) {
+    const origin = req.headers.get("origin") || "";
+    const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+    return {
+        "Access-Control-Allow-Origin": allowedOrigin,
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    };
+}
 
 serve(async (req) => {
-    // Handle CORS preflight options
+    const cors = getCorsHeaders(req);
+
+    // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: cors });
     }
 
     try {
+        // ─── JWT Authentication ───────────────────────────────────
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+            return new Response(
+                JSON.stringify({ error: "Missing auth token" }),
+                { headers: { ...cors, "Content-Type": "application/json" }, status: 401 }
+            );
+        }
+
+        // Verify the JWT by creating a Supabase client with the user's token
+        const supabase = createClient(
+            Deno.env.get("SUPABASE_URL")!,
+            Deno.env.get("SUPABASE_ANON_KEY")!,
+            { global: { headers: { Authorization: authHeader } } }
+        );
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return new Response(
+                JSON.stringify({ error: "Unauthorized — invalid or expired token" }),
+                { headers: { ...cors, "Content-Type": "application/json" }, status: 401 }
+            );
+        }
+
+        // ─── Process AI request ───────────────────────────────────
         const { action, payload } = await req.json();
 
         const openai = new OpenAI({
@@ -23,7 +61,6 @@ serve(async (req) => {
 
         let result = null;
 
-        // Scegli quale operazione eseguire in base allAction
         if (action === "summary") {
             const completion = await openai.chat.completions.create({
                 messages: [{ role: "user", content: payload.prompt }],
@@ -45,10 +82,15 @@ serve(async (req) => {
                 response_format: { type: "json_object" },
                 max_tokens: 1500,
             });
-            // Parse JSON
             const rawContent = completion.choices[0]?.message?.content || "{}";
             const cleanContent = rawContent.replace(/```json\n?|\n?```/g, '').trim();
             result = JSON.parse(cleanContent);
+
+        } else {
+            return new Response(
+                JSON.stringify({ error: `Unknown action: ${action}` }),
+                { headers: { ...cors, "Content-Type": "application/json" }, status: 400 }
+            );
         }
 
         return new Response(JSON.stringify(result), {
