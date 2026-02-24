@@ -405,9 +405,11 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
         }
     };
 
+    const { signOut } = useAuth();
+
     return (
         <div className="registration">
-            {/* Progress bar */}
+            {/* Progress bar + Esci */}
             <div className="reg-progress">
                 <div className="reg-progress-bar">
                     <div
@@ -418,6 +420,23 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
                 <span className="reg-progress-text">
                     {step} / {totalSteps}
                 </span>
+                <button
+                    onClick={signOut}
+                    style={{
+                        background: 'none',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        color: 'rgba(255,255,255,0.5)',
+                        padding: '6px 14px',
+                        borderRadius: '10px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        marginLeft: '8px',
+                        whiteSpace: 'nowrap' as const,
+                    }}
+                >
+                    Esci
+                </button>
             </div>
 
             <div className="reg-content animate-fade-in-up" key={step}>
