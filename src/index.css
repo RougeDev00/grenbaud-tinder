@@ -596,13 +596,6 @@ html {
   html,
   body {
     overscroll-behavior: none;
-    overflow: hidden;
-  }
-
-  #root {
-    overflow-y: auto;
-    height: 100dvh;
-    -webkit-overflow-scrolling: touch;
   }
 }
 
