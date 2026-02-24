@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Profile, Message } from '../../types';
 import { sendMessage, getMessages, subscribeToMessages, markMessagesAsRead, markConversationRead } from '../../services/chatService';
 import './ChatWindow.css';
@@ -16,6 +16,56 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const overlayRef = useRef<HTMLDivElement>(null);
+
+    // ── Swipe-to-go-back ──
+    const [swipeX, setSwipeX] = useState(0);
+    const [swiping, setSwiping] = useState(false);
+    const touchStartX = useRef(0);
+    const touchStartY = useRef(0);
+    const isSwipeGesture = useRef(false);
+
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchStartX.current = touch.clientX;
+        touchStartY.current = touch.clientY;
+        isSwipeGesture.current = false;
+        // Only enable swipe from left edge (first 40px)
+        if (touch.clientX < 40) {
+            isSwipeGesture.current = true;
+            setSwiping(true);
+        }
+    }, []);
+
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        if (!isSwipeGesture.current) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - touchStartX.current;
+        const dy = Math.abs(touch.clientY - touchStartY.current);
+        // If vertical movement is larger, cancel the swipe
+        if (dy > Math.abs(dx) && dx < 20) {
+            isSwipeGesture.current = false;
+            setSwiping(false);
+            setSwipeX(0);
+            return;
+        }
+        if (dx > 0) {
+            setSwipeX(dx);
+        }
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+        if (!isSwipeGesture.current) return;
+        if (swipeX > 120) {
+            // Dismiss with animation
+            setSwipeX(window.innerWidth);
+            setTimeout(onClose, 250);
+        } else {
+            setSwipeX(0);
+        }
+        setSwiping(false);
+        isSwipeGesture.current = false;
+    }, [swipeX, onClose]);
 
     // Auto-scroll to bottom
     const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -152,8 +202,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
         };
     }, [currentUser.twitch_id, otherUser.twitch_id]);
 
+    const overlayStyle: React.CSSProperties = swipeX > 0
+        ? {
+            transform: `translateX(${swipeX}px)`,
+            transition: swiping ? 'none' : 'transform 0.25s ease-out',
+        }
+        : {};
+
     return (
-        <div className="chat-window-overlay animate-slide-up">
+        <div
+            className="chat-window-overlay animate-slide-up"
+            ref={overlayRef}
+            style={overlayStyle}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+        >
+            {/* Swipe indicator edge bar */}
+            <div className="chat-swipe-indicator" />
+
             <div className="chat-window-container">
                 {/* Header */}
                 <div className="chat-header">
