@@ -55,7 +55,7 @@ const AppContent: React.FC = () => {
         return;
       }
       try {
-        const result = await checkGrenbaudSubscription(providerToken, user.id);
+        const result = await checkGrenbaudSubscription(providerToken);
         console.log('[SubCheck] Result:', result);
         setSubCheckStatus(result.isSubscribed ? 'subscribed' : 'not_subscribed');
       } catch (err) {

@@ -10,8 +10,31 @@
 const TWITCH_CLIENT_ID = import.meta.env.VITE_TWITCH_CLIENT_ID || '';
 const GRENBAUD_CHANNEL = 'grenbaud';
 
+/** Resolve the current authenticated user's Twitch ID from their token */
+async function getMyTwitchId(providerToken: string): Promise<string | null> {
+    try {
+        const res = await fetch('https://api.twitch.tv/helix/users', {
+            headers: {
+                'Authorization': `Bearer ${providerToken}`,
+                'Client-Id': TWITCH_CLIENT_ID,
+            },
+        });
+        if (!res.ok) {
+            console.error('[Twitch] Failed to get current user:', res.status);
+            return null;
+        }
+        const data = await res.json();
+        const userId = data?.data?.[0]?.id;
+        console.log('[Twitch] Current user ID:', userId, 'login:', data?.data?.[0]?.login);
+        return userId || null;
+    } catch (err) {
+        console.error('[Twitch] Error getting current user:', err);
+        return null;
+    }
+}
+
 /** Resolve a Twitch username to a user ID */
-async function getTwitchUserId(
+async function getTwitchUserIdByLogin(
     login: string,
     providerToken: string
 ): Promise<string | null> {
@@ -26,7 +49,7 @@ async function getTwitchUserId(
             }
         );
         if (!res.ok) {
-            console.error('[Twitch] Failed to resolve user ID:', res.status);
+            console.error('[Twitch] Failed to resolve user ID for', login, ':', res.status);
             return null;
         }
         const data = await res.json();
@@ -39,11 +62,10 @@ async function getTwitchUserId(
 
 /**
  * Check if the authenticated user is subscribed to GrenBaud's channel.
- * Returns { isSubscribed, tier, giftedBy? }
+ * Only requires the providerToken — resolves all IDs automatically.
  */
 export async function checkGrenbaudSubscription(
-    providerToken: string,
-    twitchUserId: string
+    providerToken: string
 ): Promise<{ isSubscribed: boolean; tier?: string }> {
     if (!TWITCH_CLIENT_ID) {
         console.error('[Twitch] VITE_TWITCH_CLIENT_ID not set — skipping sub check');
@@ -52,16 +74,25 @@ export async function checkGrenbaudSubscription(
     }
 
     try {
-        // 1. Resolve GrenBaud's broadcaster ID
-        const broadcasterId = await getTwitchUserId(GRENBAUD_CHANNEL, providerToken);
+        // 1. Resolve current user's Twitch ID
+        const myTwitchId = await getMyTwitchId(providerToken);
+        if (!myTwitchId) {
+            console.error('[Twitch] Could not resolve current user Twitch ID');
+            return { isSubscribed: false };
+        }
+
+        // 2. Resolve GrenBaud's broadcaster ID
+        const broadcasterId = await getTwitchUserIdByLogin(GRENBAUD_CHANNEL, providerToken);
         if (!broadcasterId) {
             console.error('[Twitch] Could not resolve broadcaster ID for', GRENBAUD_CHANNEL);
             return { isSubscribed: false };
         }
 
-        // 2. Check subscription
+        console.log('[Twitch] Checking sub: user', myTwitchId, 'broadcaster', broadcasterId);
+
+        // 3. Check subscription
         const res = await fetch(
-            `https://api.twitch.tv/helix/subscriptions/user?broadcaster_id=${broadcasterId}&user_id=${twitchUserId}`,
+            `https://api.twitch.tv/helix/subscriptions/user?broadcaster_id=${broadcasterId}&user_id=${myTwitchId}`,
             {
                 headers: {
                     'Authorization': `Bearer ${providerToken}`,
@@ -72,13 +103,13 @@ export async function checkGrenbaudSubscription(
 
         if (res.status === 404) {
             // Not subscribed
+            console.log('[Twitch] User is NOT subscribed');
             return { isSubscribed: false };
         }
 
         if (!res.ok) {
             const errText = await res.text();
             console.error('[Twitch] Sub check failed:', res.status, errText);
-            // On error, fail closed (not subscribed)
             return { isSubscribed: false };
         }
 
@@ -86,7 +117,7 @@ export async function checkGrenbaudSubscription(
         const sub = data?.data?.[0];
 
         if (sub) {
-            console.log('[Twitch] User is subscribed! Tier:', sub.tier);
+            console.log('[Twitch] User IS subscribed! Tier:', sub.tier);
             return { isSubscribed: true, tier: sub.tier };
         }
 
