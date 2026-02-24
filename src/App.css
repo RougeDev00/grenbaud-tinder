@@ -4,8 +4,8 @@
     flex-direction: column;
     min-height: 100dvh;
     padding-top: calc(60px + env(safe-area-inset-top, 0px));
-    /* fixed top header height + notch */
-    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    /* Bottom navbar handles its own safe-area padding internally */
+    padding-bottom: 56px;
 }
 
 .app-header {
