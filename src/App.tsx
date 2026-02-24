@@ -544,7 +544,7 @@ const AppContent: React.FC = () => {
 
       {/* Bottom navbar */}
       <Navbar unreadCount={unreadCount} />
-      <div style={{ position: 'fixed', bottom: '80px', right: '10px', fontSize: '10px', opacity: 0.8, zIndex: 9999, pointerEvents: 'none', textShadow: '0 1px 2px black' }}>v0.4.6</div>
+      <div style={{ position: 'fixed', bottom: '80px', right: '10px', fontSize: '10px', opacity: 0.8, zIndex: 9999, pointerEvents: 'none', textShadow: '0 1px 2px black' }}>v0.4.7</div>
     </div>
   );
 };

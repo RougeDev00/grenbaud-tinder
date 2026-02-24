@@ -50,17 +50,19 @@ export const createNotification = async (
 
 export const checkReciprocalInterest = async (userId: string, actorId: string): Promise<boolean> => {
     try {
-        // Check if there's already a 'SPY' notification sent from the target (actorId) to the current user (userId)
+        // Check if the OTHER user (actorId) has already generated a compatibility score for this pair
+        // This is the source of truth — not SPY notifications (which persist after admin deletion)
+        const [user_a, user_b] = [userId, actorId].sort();
         const { data, error } = await supabase
-            .from('notifications')
+            .from('compatibility_scores')
             .select('id')
-            .eq('user_id', userId)
-            .eq('actor_id', actorId)
-            .in('type', ['SPY', 'SPY_RECIPROCAL'])
-            .limit(1);
+            .eq('user_a', user_a)
+            .eq('user_b', user_b)
+            .eq('generated_by', actorId)
+            .maybeSingle();
 
         if (error) throw error;
-        return (data && data.length > 0);
+        return !!data;
     } catch (err) {
         console.error('[NotificationService] Error checking reciprocal interest:', err);
         return false;
