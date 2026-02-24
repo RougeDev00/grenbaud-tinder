@@ -6,7 +6,7 @@
     right: 0;
     bottom: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     background: #0a0a14;
     z-index: 1000;
     display: flex;
@@ -208,8 +208,13 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: #0a0a14;
     color: #fff;
-    font-size: 1rem;
+    font-size: 16px;
+    /* Prevents iOS zoom on focus */
     outline: none;
+}
+
+.chat-input::placeholder {
+    font-size: 0.9rem;
 }
 
 .chat-input:focus {
@@ -307,4 +312,50 @@
     margin-bottom: 8px;
     display: flex;
     gap: 8px;
+}
+
+/* ============================== */
+/* MOBILE OPTIMIZATIONS           */
+/* ============================== */
+
+@media (max-width: 480px) {
+    .chat-header {
+        height: 56px;
+        min-height: 56px;
+        padding: 0 12px;
+    }
+
+    .chat-messages {
+        padding: 14px 10px;
+        gap: 8px;
+    }
+
+    .chat-input-area {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .message-bubble {
+        padding: 8px 14px;
+        font-size: 0.95rem;
+    }
+
+    .message-content-wrap {
+        max-width: 82%;
+    }
+
+    .chat-back-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .chat-send-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    .chat-rules-content {
+        padding: 20px 16px;
+        max-width: 290px;
+    }
 }

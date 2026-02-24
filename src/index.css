@@ -529,12 +529,48 @@ textarea.input-field {
 
   .btn {
     padding: 12px 22px;
+    /* Ensure minimum 44px touch target */
+    min-height: 44px;
+  }
+
+  .btn-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+
+  .input-field {
+    padding: 14px 16px;
+    font-size: 16px;
+    /* Prevents iOS zoom on focus */
+  }
+
+  textarea.input-field {
+    font-size: 16px;
+  }
+
+  .chip {
+    padding: 6px 12px;
+    font-size: 0.78rem;
   }
 }
 
 @media (max-width: 390px) {
   html {
     font-size: 14px;
+  }
+
+  h1 {
+    font-size: clamp(1.6rem, 7vw, 2.5rem);
+  }
+
+  h2 {
+    font-size: clamp(1.2rem, 5vw, 1.6rem);
+  }
+
+  .btn {
+    padding: 11px 18px;
+    font-size: 0.9rem;
   }
 }
 
@@ -551,7 +587,29 @@ textarea.input-field {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Prevent pull-to-refresh on mobile */
+html {
+  overscroll-behavior-y: contain;
+}
+
 .scroll-container {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+}
+
+/* Smooth momentum scrolling for all scroll containers */
+[style*="overflow"] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Better text rendering on mobile */
+@media (max-width: 768px) {
+  body {
+    text-rendering: optimizeSpeed;
+  }
+
+  /* Reduce heavy animations on mobile for performance */
+  .glow-border::after {
+    filter: blur(4px);
+  }
 }

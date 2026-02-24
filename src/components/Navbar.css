@@ -149,3 +149,32 @@
     border-radius: 0 0 2px 2px;
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
 }
+
+/* ============================== */
+/* MOBILE OPTIMIZATIONS           */
+/* ============================== */
+
+@media (max-width: 480px) {
+    .navbar-item {
+        padding: 8px 16px;
+        min-height: 44px;
+    }
+
+    .navbar-header {
+        padding: 0 14px;
+    }
+
+    .navbar-logo {
+        height: 28px;
+    }
+}
+
+@media (max-width: 360px) {
+    .navbar-item {
+        padding: 6px 10px;
+    }
+
+    .navbar-label {
+        font-size: 0.55rem;
+    }
+}

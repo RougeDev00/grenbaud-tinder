@@ -458,3 +458,94 @@
 .profile-card.is-center-hovered .profile-card-center-overlay span {
     transform: scale(1);
 }
+
+/* ============================== */
+/* MOBILE OPTIMIZATIONS           */
+/* ============================== */
+
+@media (max-width: 480px) {
+    .profile-card-name {
+        font-size: 1.2rem;
+    }
+
+    .profile-card-age {
+        font-size: 0.9rem;
+    }
+
+    .profile-card-overlay {
+        padding: 12px;
+        gap: 4px;
+    }
+
+    .profile-card-bio-preview {
+        font-size: 0.75rem;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+    }
+
+    .card-badge {
+        padding: 3px 7px;
+        font-size: 0.65rem;
+        gap: 4px;
+    }
+
+    .profile-card-badges {
+        gap: 4px;
+    }
+
+    .hobby-chip {
+        padding: 2px 6px;
+        font-size: 0.6rem;
+    }
+
+    .profile-card-username {
+        font-size: 0.6rem;
+    }
+
+    .match-badge {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        border-radius: 10px;
+    }
+
+    .match-badge--final {
+        font-size: 0.95rem;
+        padding: 7px 12px;
+    }
+
+    .photo-dots {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+    }
+}
+
+@media (max-width: 360px) {
+    .profile-card-name {
+        font-size: 1rem;
+    }
+
+    .profile-card-overlay {
+        padding: 10px;
+    }
+
+    .profile-card-bio-preview {
+        display: none;
+    }
+
+    .profile-card-hobbies {
+        display: none;
+    }
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) {
+    .profile-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .profile-card-center-overlay {
+        display: none;
+    }
+}

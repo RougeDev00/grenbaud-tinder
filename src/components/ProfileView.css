@@ -1431,3 +1431,91 @@
     color: #e9d5ff;
     font-weight: 600;
 }
+
+/* ============================== */
+/* MOBILE OPTIMIZATIONS           */
+/* ============================== */
+
+@media (max-width: 480px) {
+
+    /* Tighter padding on profile view */
+    .profile-view-container {
+        padding: 16px 12px 100px !important;
+    }
+
+    /* Compatibility card */
+    .compatibility-card {
+        padding: 14px;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+
+    .compatibility-title {
+        font-size: 0.95rem;
+    }
+
+    .compatibility-subtitle {
+        font-size: 0.78rem;
+    }
+
+    /* Photo grid in edit mode */
+    .profile-photos-grid {
+        gap: 8px;
+    }
+
+    /* Chips */
+    .chip--gender,
+    .chip--city,
+    .chip--zodiac,
+    .chip--archetype {
+        font-size: 0.78rem;
+        padding: 5px 12px;
+    }
+
+    /* Bio sections */
+    .profile-bio-section {
+        padding: 14px;
+    }
+
+    /* Action buttons - ensure touch targets */
+    .profile-action-btn,
+    .btn-edit-profile,
+    .btn-save-profile,
+    .btn-cancel-edit {
+        min-height: 44px;
+        padding: 12px 16px;
+    }
+
+    /* Personality radar chart — slightly smaller */
+    .personality-radar-wrapper {
+        max-width: 280px;
+    }
+}
+
+@media (max-width: 360px) {
+    .profile-view-container {
+        padding: 12px 8px 100px !important;
+    }
+
+    .compatibility-card {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .chip--gender,
+    .chip--city,
+    .chip--zodiac,
+    .chip--archetype {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+    }
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) {
+
+    .profile-action-btn:hover,
+    .btn-edit-profile:hover {
+        transform: none;
+    }
+}

@@ -876,3 +876,99 @@ input[type="time"].event-form-input::-webkit-calendar-picker-indicator {
     cursor: not-allowed;
     background: rgba(255, 255, 255, 0.1);
 }
+
+/* ============================== */
+/* MOBILE OPTIMIZATIONS           */
+/* ============================== */
+
+@media (max-width: 480px) {
+    .events-container {
+        padding: 16px 12px 100px;
+    }
+
+    .events-header h2 {
+        font-size: 1.4rem;
+    }
+
+    .btn-create-event {
+        padding: 8px 14px;
+        font-size: 0.8rem;
+        border-radius: 12px;
+        min-height: 44px;
+    }
+
+    .events-tabs {
+        gap: 16px;
+    }
+
+    .events-tab {
+        font-size: 0.85rem;
+        min-height: 44px;
+    }
+
+    .event-card {
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .event-title {
+        font-size: 1.15rem;
+    }
+
+    .event-description {
+        font-size: 0.8rem;
+    }
+
+    .event-card-footer {
+        padding-top: 12px;
+    }
+
+    .event-form-input {
+        font-size: 16px;
+        /* Prevents iOS zoom */
+        padding: 12px 14px;
+    }
+
+    .event-modal {
+        padding: 20px !important;
+        border-radius: 20px !important;
+    }
+
+    .event-modal-header h3 {
+        font-size: 1.2rem;
+    }
+
+    .event-form-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .event-details-content {
+        padding: 0 20px 24px;
+    }
+
+    .event-details-title {
+        font-size: 1.6rem !important;
+    }
+
+    .event-details-meta {
+        gap: 10px;
+        font-size: 0.85rem;
+    }
+
+    /* Event chat mobile */
+    .event-chat-input-area {
+        padding: 10px 12px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+
+    .event-chat-input {
+        font-size: 16px;
+        /* Prevents iOS zoom */
+        padding: 10px 14px;
+    }
+
+    .event-chat-messages {
+        padding: 14px;
+    }
+}
