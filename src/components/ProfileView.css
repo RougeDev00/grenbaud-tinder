@@ -254,6 +254,20 @@
     padding: 20px;
 }
 
+/* Posts tab — match profile card dimensions */
+.profile-posts-tab {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.profile-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .profile-view-name-row {
     display: flex;
     align-items: center;
