@@ -701,11 +701,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
                                     )}
                                 </div>
                                 <div className="profile-view-chips-row">
-                                    {profile.gender && (
-                                        <span className="chip chip--gender">
-                                            {profile.gender === 'Maschio' ? '♂' : profile.gender === 'Femmina' ? '♀' : '⚧'} {profile.gender}
-                                        </span>
-                                    )}
+                                    {profile.gender && (() => {
+                                        const genderLabel: Record<string, string> = { 'M': 'Maschio', 'F': 'Femmina', 'N/S': 'Non specificato' };
+                                        const label = genderLabel[profile.gender] || profile.gender;
+                                        const icon = profile.gender === 'M' || profile.gender === 'Maschio' ? '♂' : profile.gender === 'F' || profile.gender === 'Femmina' ? '♀' : '⚧';
+                                        return <span className="chip chip--gender">{icon} {label}</span>;
+                                    })()}
                                     {profile.city && (
                                         <span className="chip chip--city">📍 {profile.city}</span>
                                     )}

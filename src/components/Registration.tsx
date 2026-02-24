@@ -20,6 +20,18 @@ const ZODIAC_SIGNS = [
     '♐ Sagittario', '♑ Capricorno', '♒ Acquario', '♓ Pesci'
 ];
 
+// Gender labels ↔ short DB codes (varchar(4) limit)
+const GENDER_LABEL_TO_CODE: Record<string, string> = {
+    'Maschio': 'M',
+    'Femmina': 'F',
+    'Preferisco non specificarlo': 'N/S',
+};
+const GENDER_CODE_TO_LABEL: Record<string, string> = {
+    'M': 'Maschio',
+    'F': 'Femmina',
+    'N/S': 'Preferisco non specificarlo',
+};
+
 const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
     const { user, session, profile, isMockMode, signOut } = useAuth();
     const [step, setStep] = useState(1);
@@ -43,7 +55,7 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
     const [instagram, setInstagram] = useState(profile?.instagram || '');
     const [lookingFor, setLookingFor] = useState(profile?.looking_for || '');
     const [displayName, setDisplayName] = useState(profile?.display_name || '');
-    const [gender, setGender] = useState(profile?.gender || '');
+    const [gender, setGender] = useState(GENDER_CODE_TO_LABEL[profile?.gender || ''] || profile?.gender || '');
     const [freeTime, setFreeTime] = useState(profile?.free_time || '');
     const [age, setAge] = useState<string>(profile?.age ? String(profile.age) : '');
     const [city, setCity] = useState(profile?.city || '');
@@ -312,7 +324,7 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
                     instagram,
                     looking_for: lookingFor,
                     personality_type: personalityType,
-                    gender,
+                    gender: GENDER_LABEL_TO_CODE[gender] || gender,
                     age: parseInt(age) || undefined,
                     city,
                     free_time: freeTime,
