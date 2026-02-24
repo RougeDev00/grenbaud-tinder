@@ -3,7 +3,7 @@ import type { Profile, EsploraPostWithProfile } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteProfile, updateProfile } from '../services/profileService';
 import { getUserPosts } from '../services/esploraService';
-import { generatePersonalityAnalysis, generateProfileSummary } from '../services/aiService';
+import { generatePersonalityAnalysis } from '../services/aiService';
 import { checkMutualAnalysis } from '../services/notificationService';
 import { compressImage } from '../utils/imageUtils';
 import PersonalityQuiz from './PersonalityQuiz';
@@ -105,7 +105,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isQuizOpen, setIsQuizOpen] = useState(false);
     const [localAiAnalysis, setLocalAiAnalysis] = useState<string | null>(null);
-    const [isRegeneratingSummary, setIsRegeneratingSummary] = useState(false);
     const [showDetails, setShowDetails] = useState(true);
     const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
     const [isPersonalityExpanded, setIsPersonalityExpanded] = useState(true);
@@ -218,51 +217,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
         }
     };
 
-    const handleRegenerateSummary = async () => {
-        if (!session || !user || isRegeneratingSummary) return;
 
-        const currentCount = profile.ai_summary_regenerations || 0;
-        const maxRegenerations = 3;
-
-        if (currentCount >= maxRegenerations) {
-            alert(`Hai raggiunto il limite massimo di rigenerazioni (${maxRegenerations}).`);
-            return;
-        }
-
-        if (profile.ai_summary) {
-            const confirmMsg = `Vuoi rigenerare la tua Bio AI? (Rimasti: ${maxRegenerations - currentCount}/${maxRegenerations})`;
-            if (!window.confirm(confirmMsg)) return;
-        }
-
-        setIsRegeneratingSummary(true);
-        try {
-            console.log('[AI] Manual summary regeneration requested...');
-            console.log('[AI] Profile data:', { id: profile.id, display_name: profile.display_name, has_answers: !!profile.personality_answers });
-            const newSummary = await generateProfileSummary(profile, profile.personality_answers);
-            console.log('[AI] Summary result:', newSummary ? 'SUCCESS' : 'NULL');
-
-            if (newSummary) {
-                const newCount = currentCount + 1;
-                const updatedProfile = await updateProfile(profile.id, {
-                    ai_summary: newSummary,
-                    ai_summary_regenerations: newCount
-                });
-                if (updatedProfile) {
-                    setProfile(prev => ({ ...prev, ai_summary: newSummary, ai_summary_regenerations: newCount }));
-                    alert(`Bio AI aggiornata! (${newCount}/${maxRegenerations} usati) ✨`);
-                } else {
-                    alert('Errore durante il salvataggio della nuova Bio AI.');
-                }
-            } else {
-                alert('Errore durante la generazione della Bio AI. Controlla la console per dettagli.');
-            }
-        } catch (err: any) {
-            console.error('[AI] Regeneration error:', err);
-            alert(`Errore: ${err?.message || 'Errore sconosciuto'}`);
-        } finally {
-            setIsRegeneratingSummary(false);
-        }
-    };
 
     // Check mutual analysis for chat unlock
     React.useEffect(() => {
@@ -737,24 +692,6 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
                                                 </div>
 
                                                 <div className="ai-ultra-actions" style={{ position: 'relative', zIndex: 10 }}>
-                                                    {!readOnly && !isEditing && (
-                                                        <button
-                                                            className={`btn-ai-ultra-regen ${isRegeneratingSummary ? 'loading' : ''}`}
-                                                            onClick={handleRegenerateSummary}
-                                                            disabled={isRegeneratingSummary || (profile.ai_summary_regenerations || 0) >= 3}
-                                                            title={`Rigenera (${3 - (profile.ai_summary_regenerations || 0)} rimaste)`}
-                                                            style={{ opacity: (profile.ai_summary_regenerations || 0) >= 3 ? 0.5 : 1, padding: '6px 12px' }}
-                                                        >
-                                                            {isRegeneratingSummary ? (
-                                                                <span className="regen-spinner">⏳...</span>
-                                                            ) : (
-                                                                <>
-                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-10.44l5.58-1.13" /></svg>
-                                                                    <span className="regen-count-badge" style={{ fontSize: '0.7rem' }}>{3 - (profile.ai_summary_regenerations || 0)}</span>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    )}
 
                                                     <button
                                                         className={`btn-ai-ultra-toggle ${isSummaryExpanded ? 'expanded' : ''}`}
@@ -777,27 +714,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
                                     </div>
                                 )}
 
-                                {!profile.ai_summary && !readOnly && !isEditing && (
-                                    <div className="profile-section profile-section--ai profile-ai-empty-cta" style={{ marginBottom: '24px' }}>
-                                        <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                                            <div style={{ fontSize: '1.8rem', marginBottom: '8px' }}>✨</div>
-                                            <h4 style={{ color: '#fff', marginBottom: '8px', fontSize: '1.2rem' }}>Manca la tua Bio AI!</h4>
-                                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: '16px' }}>
-                                                L'intelligenza artificiale può analizzare i tuoi dati per creare una descrizione unica di chi sei.
-                                            </p>
-                                            <button
-                                                className={`btn btn-primary btn-generate-big ${isRegeneratingSummary ? 'loading' : ''}`}
-                                                onClick={handleRegenerateSummary}
-                                                disabled={isRegeneratingSummary || (profile.ai_summary_regenerations || 0) >= 3}
-                                                style={{ width: '100%', maxWidth: '240px', margin: '0 auto', opacity: (profile.ai_summary_regenerations || 0) >= 3 ? 0.5 : 1, padding: '10px', fontSize: '0.9rem' }}
-                                            >
-                                                {isRegeneratingSummary ? '⏳ Generazione in corso...' : (
-                                                    `✨ Genera Bio AI (${3 - (profile.ai_summary_regenerations || 0)})`
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
+
 
                                 <div className={`profile-view-sections ${!showDetails ? 'hidden' : ''}`}>
                                     <ProfileBioSection profile={profile} />
