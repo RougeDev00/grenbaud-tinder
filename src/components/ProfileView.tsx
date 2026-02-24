@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import type { Profile, EsploraPostWithProfile } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteProfile, updateProfile } from '../services/profileService';
@@ -6,6 +6,9 @@ import { getUserPosts } from '../services/esploraService';
 import { generatePersonalityAnalysis } from '../services/aiService';
 import { checkMutualAnalysis } from '../services/notificationService';
 import { compressImage } from '../utils/imageUtils';
+import { getCroppedImg } from '../utils/cropUtils';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
 import PersonalityQuiz from './PersonalityQuiz';
 import ThreadPost from './Esplora/ThreadPost';
 import { CompatibilityCard } from './ProfileView/CompatibilityCard';
@@ -15,6 +18,7 @@ import { ProfileHeader } from './ProfileView/ProfileHeader';
 import { PersonalityRadarChart } from './ProfileView/PersonalityRadarChart';
 import { ARCHETYPES } from '../data/archetypes';
 import './ProfileView.css';
+import './CropModal.css';
 
 interface ProfileViewProps {
     profile: Profile;
@@ -144,6 +148,17 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [editingPhotoSlot, setEditingPhotoSlot] = useState(-1);
 
+    // Crop modal state
+    const [cropImage, setCropImage] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    const [isCropping, setIsCropping] = useState(false);
+
+    const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
+        setCroppedAreaPixels(croppedPixels);
+    }, []);
+
     const handlePhotoClick = (slot: number) => {
         if (!isEditing) return;
         setEditingPhotoSlot(slot);
@@ -151,30 +166,56 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        let file = e.target.files?.[0];
+        const file = e.target.files?.[0];
         if (!file || editingPhotoSlot < 0) return;
 
-        // Auto-compress
-        try {
-            console.log(`Original file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-            const compressed = await compressImage(file, 1200, 1200, 0.7);
-            console.log(`Compressed file size: ${(compressed.size / 1024 / 1024).toFixed(2)} MB`);
-            file = compressed;
-        } catch (err) {
-            console.warn('Image compression failed, using original file:', err);
-        }
-
+        // Read the file and open the crop modal
         const reader = new FileReader();
         reader.onload = (ev) => {
-            const newPhotos = [...photos];
-            newPhotos[editingPhotoSlot] = ev.target?.result as string;
-            setPhotos(newPhotos);
-            const newFiles = [...photoFiles];
-            newFiles[editingPhotoSlot] = file;
-            setPhotoFiles(newFiles);
+            setCropImage(ev.target?.result as string);
+            setCrop({ x: 0, y: 0 });
+            setZoom(1);
         };
         reader.readAsDataURL(file);
         e.target.value = '';
+    };
+
+    const handleCropConfirm = async () => {
+        if (!cropImage || !croppedAreaPixels) return;
+        setIsCropping(true);
+        try {
+            const croppedBlob = await getCroppedImg(cropImage, croppedAreaPixels, 0.9);
+            let croppedFile = new File([croppedBlob], `photo_${editingPhotoSlot + 1}.jpg`, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+            });
+
+            // Compress the cropped image
+            try {
+                croppedFile = await compressImage(croppedFile, 1200, 1200, 0.7);
+            } catch (err) {
+                console.warn('Compression after crop failed:', err);
+            }
+
+            const previewUrl = URL.createObjectURL(croppedFile);
+            const newPhotos = [...photos];
+            newPhotos[editingPhotoSlot] = previewUrl;
+            setPhotos(newPhotos);
+            const newFiles = [...photoFiles];
+            newFiles[editingPhotoSlot] = croppedFile;
+            setPhotoFiles(newFiles);
+        } catch (err) {
+            console.error('Crop failed:', err);
+        } finally {
+            setCropImage(null);
+            setIsCropping(false);
+        }
+    };
+
+    const handleCropCancel = () => {
+        setCropImage(null);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
     };
 
     const handleCancel = () => {
@@ -429,10 +470,51 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
             ref={containerRef}
             style={lockedWidth ? { width: `${lockedWidth}px`, maxWidth: `${lockedWidth}px` } : undefined}
         >
-            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*,.heic,.heif,.avif,.webp" onChange={handleFileChange} />
 
-
-
+            {/* Crop Modal */}
+            {cropImage && (
+                <div className="crop-modal-overlay">
+                    <div className="crop-modal-container">
+                        <div className="crop-modal-header">
+                            <h3>Ritaglia foto</h3>
+                            <button className="crop-modal-close" onClick={handleCropCancel}>✕</button>
+                        </div>
+                        <div className="crop-area-wrapper">
+                            <Cropper
+                                image={cropImage}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={3 / 4}
+                                onCropChange={setCrop}
+                                onZoomChange={setZoom}
+                                onCropComplete={onCropComplete}
+                                cropShape="rect"
+                                showGrid={false}
+                            />
+                        </div>
+                        <div className="crop-zoom-control">
+                            <span>🔍</span>
+                            <input
+                                type="range"
+                                className="crop-zoom-slider"
+                                min={1}
+                                max={3}
+                                step={0.05}
+                                value={zoom}
+                                onChange={(e) => setZoom(Number(e.target.value))}
+                            />
+                            <span>{Math.round(zoom * 100)}%</span>
+                        </div>
+                        <div className="crop-modal-actions">
+                            <button className="crop-btn crop-btn-cancel" onClick={handleCropCancel}>Annulla</button>
+                            <button className="crop-btn crop-btn-confirm" onClick={handleCropConfirm} disabled={isCropping}>
+                                {isCropping ? 'Ritaglio...' : 'Conferma'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <ProfileHeader
                 readOnly={readOnly}
