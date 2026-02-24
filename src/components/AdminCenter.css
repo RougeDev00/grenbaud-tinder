@@ -1,0 +1,234 @@
+/* =============================================
+   Admin Center — Extra styles
+   (extends AdminApp.css base styles)
+============================================= */
+
+/* Search Bar */
+.ac-search-bar {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.ac-search-bar input {
+    width: 100%;
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.ac-search-bar input:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+}
+
+.ac-search-bar input::placeholder {
+    color: #555;
+}
+
+/* Photos Section */
+.ac-photos-section {
+    margin-top: 28px;
+}
+
+.ac-photos-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+    color: white;
+}
+
+.ac-photos-grid {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ac-photo-thumb {
+    width: 120px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--admin-border);
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.ac-photo-thumb:hover {
+    transform: scale(1.05);
+    border-color: var(--admin-primary);
+}
+
+/* Compatibility Scores Section */
+.ac-scores-section {
+    margin-top: 32px;
+    border-top: 1px solid var(--admin-border);
+    padding-top: 24px;
+}
+
+.ac-scores-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: white;
+}
+
+.ac-scores-table {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.ac-scores-header {
+    display: grid;
+    grid-template-columns: 2fr 80px 3fr 90px 50px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--admin-border);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--admin-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ac-score-row {
+    display: grid;
+    grid-template-columns: 2fr 80px 3fr 90px 50px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    align-items: center;
+    transition: background 0.15s;
+}
+
+.ac-score-row:last-child {
+    border-bottom: none;
+}
+
+.ac-score-row:hover {
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.ac-score-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.ac-score-user img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--admin-border);
+}
+
+.ac-score-user div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ac-score-user strong {
+    font-size: 0.9rem;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ac-score-user span {
+    font-size: 0.75rem;
+    color: var(--admin-text-dim);
+}
+
+.ac-score-value {
+    text-align: center;
+}
+
+.ac-score-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.ac-score-badge.high {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+
+.ac-score-badge.mid {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+.ac-score-badge.low {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+.ac-score-explanation {
+    font-size: 0.82rem;
+    color: var(--admin-text-dim);
+    line-height: 1.4;
+    padding-right: 8px;
+}
+
+.ac-score-date {
+    font-size: 0.8rem;
+    color: var(--admin-text-dim);
+    text-align: center;
+}
+
+.ac-score-actions {
+    text-align: center;
+}
+
+.ac-btn-delete-score {
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.ac-btn-delete-score:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.6);
+}
+
+/* Banned item in sidebar */
+.admin-user-item.banned {
+    opacity: 0.5;
+}
+
+/* Responsive: on smaller screens, stack the scores */
+@media (max-width: 900px) {
+    .ac-scores-header {
+        display: none;
+    }
+
+    .ac-score-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px;
+    }
+
+    .ac-score-user {
+        width: 100%;
+    }
+
+    .ac-score-value {
+        text-align: left;
+    }
+}

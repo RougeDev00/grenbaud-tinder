@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import AdminApp from './components/AdminApp'
+import AdminCenter from './components/AdminCenter'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -48,7 +49,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <BrowserRouter>
-        {path === '/admin' ? <AdminApp /> : <App />}
+        {path === '/admin' ? <AdminApp /> : path === '/admincenter' ? <AdminCenter /> : <App />}
       </BrowserRouter>
     </ErrorBoundary>
   </StrictMode>,

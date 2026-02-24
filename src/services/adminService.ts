@@ -52,6 +52,30 @@ export const deleteUser = async (targetId: string, password: string): Promise<vo
     if (error) throw error;
 };
 
+export interface CompatibilityScoreRow {
+    score_id: string;
+    other_user_id: string;
+    other_display_name: string;
+    other_twitch_username: string;
+    other_avatar: string;
+    score: number;
+    explanation: string;
+    created_at: string;
+}
+
+export const getCompatibilityScores = async (targetId: string, password: string): Promise<CompatibilityScoreRow[]> => {
+    if (!isSupabaseConfigured) return [];
+    const { data, error } = await supabase.rpc('admin_get_user_scores', { target_id: targetId, admin_password: password });
+    if (error) throw error;
+    return data || [];
+};
+
+export const deleteCompatibilityScore = async (scoreId: string, password: string): Promise<void> => {
+    if (!isSupabaseConfigured) return;
+    const { error } = await supabase.rpc('admin_delete_score', { score_id: scoreId, admin_password: password });
+    if (error) throw error;
+};
+
 export const acknowledgeWarning = async (): Promise<void> => {
     if (!isSupabaseConfigured) return;
     const { error } = await supabase.rpc('acknowledge_warning');
