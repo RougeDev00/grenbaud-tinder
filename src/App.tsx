@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Landing from './components/Landing';
 import Registration from './components/Registration';
 import ProfileGrid from './components/ProfileGrid';
+import { checkGrenbaudSubscription } from './services/twitchService';
 
 import EventList from './components/Events/EventList';
 import EventDetailsPage from './components/Events/EventDetailsPage';
@@ -27,12 +28,43 @@ import './App.css';
 type IntentModal = 'existing_account' | 'no_account' | null;
 
 const AppContent: React.FC = () => {
-  const { profile, isAuthenticated, loading, setProfile, signOut, mockLogin, isMockMode } = useAuth();
+  const { profile, isAuthenticated, loading, setProfile, signOut, mockLogin, isMockMode, providerToken, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [intentModal, setIntentModal] = useState<IntentModal>(null);
   const [intentChecked, setIntentChecked] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState<Profile | null>(null);
+
+  // Twitch sub check state (for new users only)
+  const [subCheckStatus, setSubCheckStatus] = useState<'idle' | 'checking' | 'subscribed' | 'not_subscribed'>('idle');
+
+  // Check Twitch subscription for new users (no profile yet)
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    // If profile exists and is registered → existing user, skip
+    if (profile && profile.is_registered) return;
+    // If already checked, skip
+    if (subCheckStatus !== 'idle') return;
+
+    const checkSub = async () => {
+      setSubCheckStatus('checking');
+      if (!providerToken) {
+        console.warn('[SubCheck] No provider token available — cannot check subscription');
+        // If we don't have the token, we need user to re-login
+        setSubCheckStatus('not_subscribed');
+        return;
+      }
+      try {
+        const result = await checkGrenbaudSubscription(providerToken, user.id);
+        console.log('[SubCheck] Result:', result);
+        setSubCheckStatus(result.isSubscribed ? 'subscribed' : 'not_subscribed');
+      } catch (err) {
+        console.error('[SubCheck] Error:', err);
+        setSubCheckStatus('not_subscribed');
+      }
+    };
+    checkSub();
+  }, [isAuthenticated, user, profile, providerToken, subCheckStatus]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [inboxRefreshTrigger, setInboxRefreshTrigger] = useState(0);
   const [localWarningDismissed, setLocalWarningDismissed] = useState(false);
@@ -388,8 +420,81 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Authenticated but not registered OR no profile (New User) → Registration
+  // Authenticated but not registered OR no profile (New User) → check sub first
   if (!profile || !profile.is_registered) {
+    // Still checking sub status
+    if (subCheckStatus === 'idle' || subCheckStatus === 'checking') {
+      return (
+        <div style={{
+          minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--bg-primary, #0a0a0f)', color: 'white'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '16px' }}>🔍</div>
+            <p>Verifica abbonamento in corso...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Not subscribed → show blocked screen
+    if (subCheckStatus === 'not_subscribed') {
+      return (
+        <div style={{
+          minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--bg-primary, #0a0a0f)', color: 'white', padding: '24px'
+        }}>
+          <div style={{
+            textAlign: 'center', maxWidth: '420px',
+            background: 'rgba(255,255,255,0.04)', borderRadius: '20px',
+            padding: '40px 28px', border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }}>Abbonamento Richiesto</h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: '24px' }}>
+              Per creare un account su <strong>Baudr</strong> devi essere abbonato al canale
+              <strong> GrenBaud</strong> su Twitch (Prime o Tier 1+).
+            </p>
+            <a
+              href="https://twitch.tv/grenbaud"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block', padding: '14px 28px',
+                background: 'linear-gradient(135deg, #9146ff, #772ce8)',
+                color: 'white', borderRadius: '12px', fontWeight: 700,
+                textDecoration: 'none', marginBottom: '16px', fontSize: '0.95rem'
+              }}
+            >
+              Abbonati su Twitch →
+            </a>
+            <div style={{ marginTop: '8px' }}>
+              <button
+                onClick={() => { setSubCheckStatus('idle'); }}
+                style={{
+                  background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                  color: 'white', padding: '10px 20px', borderRadius: '10px',
+                  cursor: 'pointer', fontSize: '0.85rem', marginRight: '8px'
+                }}
+              >
+                Riprova
+              </button>
+              <button
+                onClick={signOut}
+                style={{
+                  background: 'none', border: 'none',
+                  color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '0.85rem'
+                }}
+              >
+                Esci
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Subscribed → show Registration
     return <Registration onComplete={handleRegistrationComplete} />;
   }
 
@@ -541,7 +646,7 @@ const AppContent: React.FC = () => {
 
       {/* Bottom navbar */}
       <Navbar unreadCount={unreadCount} />
-      <div style={{ position: 'fixed', bottom: '80px', right: '10px', fontSize: '10px', opacity: 0.8, zIndex: 9999, pointerEvents: 'none', textShadow: '0 1px 2px black' }}>v0.4.9</div>
+      <div style={{ position: 'fixed', bottom: '80px', right: '10px', fontSize: '10px', opacity: 0.8, zIndex: 9999, pointerEvents: 'none', textShadow: '0 1px 2px black' }}>v0.5.0</div>
     </div>
   );
 };

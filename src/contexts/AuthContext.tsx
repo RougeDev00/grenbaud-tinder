@@ -8,6 +8,7 @@ interface AuthContextType {
     user: User | null;
     session: Session | null;
     profile: Profile | null;
+    providerToken: string | null;
     loading: boolean;
     isAuthenticated: boolean;
     isMockMode: boolean;
@@ -72,6 +73,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
+    const [providerToken, setProviderToken] = useState<string | null>(
+        () => sessionStorage.getItem('twitch_provider_token')
+    );
     const [loading, setLoading] = useState(true);
     const [isMockMode] = useState(!isSupabaseConfigured);
 
@@ -92,6 +96,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (currentSession) {
                     setSession(currentSession);
                     setUser(currentSession.user);
+
+                    // Capture Twitch provider token if available
+                    if (currentSession.provider_token) {
+                        setProviderToken(currentSession.provider_token);
+                        sessionStorage.setItem('twitch_provider_token', currentSession.provider_token);
+                    }
 
                     // Load profile via raw fetch — bypasses Supabase JS client hang
                     console.log('[AUTH] Loading profile for:', currentSession.user.id);
@@ -153,6 +163,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setUser(newSession?.user ?? null);
 
                     if (newSession?.user) {
+                        // Capture provider token on SIGNED_IN event
+                        if (newSession.provider_token) {
+                            setProviderToken(newSession.provider_token);
+                            sessionStorage.setItem('twitch_provider_token', newSession.provider_token);
+                        }
                         const userProfile = await fetchProfileRaw(
                             newSession.user.id,
                             newSession.access_token
@@ -160,6 +175,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         setProfile(userProfile);
                     } else {
                         setProfile(null);
+                        setProviderToken(null);
+                        sessionStorage.removeItem('twitch_provider_token');
                     }
                 }
             );
@@ -179,6 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             provider: 'twitch',
             options: {
                 redirectTo: window.location.origin,
+                scopes: 'user:read:subscriptions',
             },
         });
 
@@ -200,6 +218,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setSession(null);
         setProfile(null);
+        setProviderToken(null);
+        sessionStorage.removeItem('twitch_provider_token');
     };
 
     // Mock login (for development without Supabase)
@@ -213,6 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         session,
         profile,
+        providerToken,
         loading,
         isAuthenticated,
         isMockMode,
