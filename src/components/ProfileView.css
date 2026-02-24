@@ -186,6 +186,7 @@
     justify-content: space-between;
     margin-bottom: 20px;
     padding-top: 4px;
+    contain: layout style;
 }
 
 .profile-view-header h2 {
@@ -1049,6 +1050,7 @@
     -webkit-backdrop-filter: blur(20px);
     padding: 4px;
     gap: 4px;
+    contain: layout style;
 }
 
 /* Sliding background indicator */
@@ -1170,6 +1172,7 @@
     overflow: hidden;
     position: relative;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(168, 85, 247, 0.12);
+    contain: layout style;
 }
 
 .profile-hero-img-wrap {
