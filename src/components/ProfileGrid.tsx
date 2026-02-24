@@ -20,7 +20,7 @@ type AffinityType = 'all' | 'confirmed' | 'estimated';
 const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [mockProfiles, setMockProfiles] = useState<Profile[]>([]);
-    const [isDemo, setIsDemo] = useState(false);
+    const [isDemo] = useState(false);
     const [loading, setLoading] = useState(true);
     const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
