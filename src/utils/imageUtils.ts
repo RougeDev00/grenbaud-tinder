@@ -1,5 +1,24 @@
 /**
+ * Check if a file is an image by MIME type OR by extension.
+ * Handles edge cases like HEIC files from iPhones that may have empty MIME types.
+ */
+export function isImageFile(file: File): boolean {
+    // Check MIME type first
+    if (file.type && file.type.startsWith('image/')) return true;
+
+    // Fallback: check extension (handles HEIC, HEIF, etc. with missing MIME)
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const imageExtensions = [
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg',
+        'heic', 'heif', 'avif', 'tiff', 'tif', 'ico'
+    ];
+    return imageExtensions.includes(ext);
+}
+
+/**
  * Compress and resize an image file using the Canvas API.
+ * Accepts all image formats the browser can render (JPEG, PNG, WebP, BMP, GIF, AVIF, etc.)
+ * HEIC/HEIF may not be supported on all browsers — the function will return the original file if it can't render.
  * 
  * @param file - The original File object from <input type="file">
  * @param maxWidth - Maximum width (default: 1200px)
@@ -14,12 +33,12 @@ export async function compressImage(
     quality = 0.7
 ): Promise<File> {
     return new Promise((resolve, reject) => {
-        // 1. Check if it's an image
-        if (!file.type.match(/image.*/)) {
-            return reject(new Error('File is not an image'));
+        // Accept any file that looks like an image (by MIME or extension)
+        if (!isImageFile(file)) {
+            return reject(new Error('Il file non è un\'immagine supportata'));
         }
 
-        // 2. Create an image element
+        // Create an image element
         const img = new Image();
         const reader = new FileReader();
 
@@ -29,7 +48,7 @@ export async function compressImage(
         reader.onerror = (err) => reject(err);
 
         img.onload = () => {
-            // 3. Calculate new dimensions
+            // Calculate new dimensions
             let width = img.width;
             let height = img.height;
 
@@ -45,7 +64,7 @@ export async function compressImage(
                 }
             }
 
-            // 4. Create canvas and draw image
+            // Create canvas and draw image
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
@@ -54,20 +73,21 @@ export async function compressImage(
 
             ctx.drawImage(img, 0, 0, width, height);
 
-            // 5. Convert to Blob/File (JPEG)
+            // Convert to JPEG Blob
             canvas.toBlob(
                 (blob) => {
-                    if (!blob) return reject(new Error('Compression failed'));
+                    if (!blob) return reject(new Error('Compressione fallita'));
 
-                    // Create new File with same name but likely smaller size
-                    const compressedFile = new File([blob], file.name, {
+                    // Create new File with .jpg extension
+                    const newName = file.name.replace(/\.[^.]+$/, '.jpg');
+                    const compressedFile = new File([blob], newName, {
                         type: 'image/jpeg',
                         lastModified: Date.now(),
                     });
 
-                    // Check if compression actually increased size (rare but possible for small optimized images)
+                    // Return original if compression made it bigger
                     if (compressedFile.size > file.size) {
-                        resolve(file); // Return original if smaller
+                        resolve(file);
                     } else {
                         resolve(compressedFile);
                     }
@@ -76,7 +96,11 @@ export async function compressImage(
                 quality
             );
         };
-        img.onerror = (err) => reject(err);
+        img.onerror = () => {
+            // Browser can't render this format (e.g. HEIC on Chrome) — return original
+            console.warn(`[ImageUtils] Browser cannot render ${file.name}, returning original`);
+            resolve(file);
+        };
 
         // Start reading
         reader.readAsDataURL(file);

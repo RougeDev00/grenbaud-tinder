@@ -155,11 +155,9 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
 
         try {
             // Auto-compress BEFORE NSFW check to speed up both inference and upload
-            if (file.type.match(/image.*/)) {
-                console.log(`[Reg] Original file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-                file = await compressImage(file, 1000, 1000, 0.7);
-                console.log(`[Reg] Compressed file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-            }
+            console.log(`[Reg] Original file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            file = await compressImage(file, 1000, 1000, 0.7);
+            console.log(`[Reg] Compressed file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
 
             // Check for NSFW content on the compressed image
             const imgUrl = URL.createObjectURL(file);

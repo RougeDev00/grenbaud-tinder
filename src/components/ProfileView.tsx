@@ -154,14 +154,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
         let file = e.target.files?.[0];
         if (!file || editingPhotoSlot < 0) return;
 
-        // Auto-compress < 2MB usually
+        // Auto-compress
         try {
             console.log(`Original file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-            if (file.type.match(/image.*/)) {
-                const compressed = await compressImage(file, 1200, 1200, 0.7);
-                console.log(`Compressed file size: ${(compressed.size / 1024 / 1024).toFixed(2)} MB`);
-                file = compressed;
-            }
+            const compressed = await compressImage(file, 1200, 1200, 0.7);
+            console.log(`Compressed file size: ${(compressed.size / 1024 / 1024).toFixed(2)} MB`);
+            file = compressed;
         } catch (err) {
             console.warn('Image compression failed, using original file:', err);
         }
