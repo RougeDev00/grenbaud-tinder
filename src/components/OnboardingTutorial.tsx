@@ -280,6 +280,21 @@ const OnboardingTutorial: React.FC<{ onComplete: () => void }> = ({ onComplete }
         return () => window.removeEventListener('resize', updateSpotlight);
     }, [updateSpotlight]);
 
+    // Raise the navbar above the spotlight overlay so icons are visible
+    useEffect(() => {
+        const navbar = document.querySelector('.navbar') as HTMLElement;
+        if (navbar) {
+            navbar.style.zIndex = '10002';
+            navbar.style.pointerEvents = 'none';
+        }
+        return () => {
+            if (navbar) {
+                navbar.style.zIndex = '';
+                navbar.style.pointerEvents = '';
+            }
+        };
+    }, []);
+
     const goNext = () => {
         if (animating) return;
         if (isLastStep) {

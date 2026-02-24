@@ -827,7 +827,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 60px;
+    padding-top: calc(60px + env(safe-area-inset-top, 0px));
     animation: fadeIn 0.2s ease;
 }
 
