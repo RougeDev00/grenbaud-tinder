@@ -6,20 +6,16 @@ import './Landing.css';
 import TermsModal from './TermsModal';
 
 interface LandingProps {
-    onLogin: () => void;
+    onLogin?: () => void; // kept for backwards compat but unused
 }
 
-const Landing: React.FC<LandingProps> = ({ onLogin }) => {
-    const { signInWithTwitch, isMockMode } = useAuth();
+const Landing: React.FC<LandingProps> = () => {
+    const { signInWithTwitch } = useAuth();
     const [showTerms, setShowTerms] = React.useState(false);
 
     const handleAuth = async (intent: 'create' | 'login') => {
         localStorage.setItem('auth_intent', intent);
-        if (isMockMode) {
-            onLogin();
-        } else {
-            await signInWithTwitch();
-        }
+        await signInWithTwitch();
     };
 
     const TwitchIcon = () => (
@@ -119,7 +115,7 @@ const Landing: React.FC<LandingProps> = ({ onLogin }) => {
                     </a>
                 </p>
 
-                <p style={{ opacity: 0.7, fontSize: '0.8rem', marginTop: '1rem', color: 'rgba(255,255,255,0.5)' }}>v0.2.5-fix</p>
+
             </div>
 
             {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}

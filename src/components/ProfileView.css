@@ -187,7 +187,8 @@
     justify-content: space-between;
     margin-bottom: 20px;
     padding-top: 4px;
-    contain: layout style;
+    position: relative;
+    z-index: 50;
 }
 
 .profile-view-header h2 {

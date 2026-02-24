@@ -28,7 +28,7 @@ import './App.css';
 type IntentModal = 'existing_account' | 'no_account' | null;
 
 const AppContent: React.FC = () => {
-  const { profile, isAuthenticated, loading, setProfile, signOut, mockLogin, isMockMode, providerToken, user } = useAuth();
+  const { profile, isAuthenticated, loading, setProfile, signOut, providerToken, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [intentModal, setIntentModal] = useState<IntentModal>(null);
@@ -247,20 +247,6 @@ const AppContent: React.FC = () => {
   //   loadProfiles();
   // }, [isAuthenticated, profile]);
 
-  // handleUseMockData is no longer needed as isDemoData state is removed.
-  // const handleUseMockData = () => {
-  //   console.log('[APP] Switching to Demo Mode with mock data');
-  //   setIsDemoData(true);
-  //   setProfiles(MOCK_PROFILES);
-  // };
-
-  // Handle login
-  const handleLogin = () => {
-    if (isMockMode) {
-      mockLogin();
-    }
-    // Real Twitch login is handled by Landing.tsx directly
-  };
 
   // Complete registration
   const handleRegistrationComplete = (profileData: Partial<Profile>) => {
@@ -338,7 +324,7 @@ const AppContent: React.FC = () => {
 
   // Not authenticated → Landing
   if (!isAuthenticated) {
-    return <Landing onLogin={handleLogin} />;
+    return <Landing />;
   }
 
   // === Intent Modals ===
