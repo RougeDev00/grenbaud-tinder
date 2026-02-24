@@ -157,6 +157,7 @@ export const generateMockProfiles = (count: number): Profile[] => {
             instagram: `@${name.toLowerCase()}`,
             looking_for: pickRandom(LOOKING_FOR_OPTIONS),
             gender: gender,
+            age: Math.floor(Math.random() * (35 - 18 + 1)) + 18,
             free_time: 'Streaming e serie TV',
             zodiac_sign: pickRandom(ZODIAC_SIGNS),
             photo_1: pickRandom(photoPool),

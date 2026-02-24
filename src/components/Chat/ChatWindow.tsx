@@ -166,7 +166,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
                             alt={otherUser.display_name}
                             className="chat-avatar"
                         />
-                        <span className="chat-username">{otherUser.display_name}</span>
+                        <div className="chat-name-stack">
+                            <span className="chat-username">{otherUser.display_name}</span>
+                            <span className="chat-display-name">@{otherUser.twitch_username}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -215,21 +218,44 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
                     </div>
                 ) : (
                     <div className="chat-messages">
-                        {messages.map((msg) => {
+                        {messages.map((msg, index) => {
                             const isMe = msg.sender_id === currentUser.twitch_id;
+                            // Reset stagger every few messages or just use index
+                            const animationDelay = `${(index % 10) * 0.05}s`;
+
                             return (
-                                <div key={msg.id} className={`message-row ${isMe ? 'message-row--me' : 'message-row--other'}`}>
-                                    <div className="message-bubble">
-                                        {msg.content}
-                                        {isMe && (
-                                            <span className="message-tick">
-                                                ✓
+                                <div
+                                    key={msg.id}
+                                    className={`message-row ${isMe ? 'message-row--me' : 'message-row--other'} animate-message-in`}
+                                    style={{ animationDelay }}
+                                >
+                                    {!isMe && (
+                                        <div className="message-avatar-wrap">
+                                            <img
+                                                src={otherUser.photo_1 || 'https://via.placeholder.com/32'}
+                                                alt=""
+                                                className="message-avatar"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="message-content-wrap">
+                                        {!isMe && (
+                                            <span className="message-author-name">
+                                                {otherUser.display_name} <small>@{otherUser.twitch_username}</small>
                                             </span>
                                         )}
+                                        <div className="message-bubble">
+                                            {msg.content}
+                                            {isMe && (
+                                                <span className="message-tick">
+                                                    ✓
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className="message-time">
+                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
                                     </div>
-                                    <span className="message-time">
-                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
                                 </div>
                             );
                         })}

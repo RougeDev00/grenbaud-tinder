@@ -6,7 +6,9 @@ import { MOCK_PROFILES, CURRENT_MOCK_USER } from '../lib/mockData';
  * Get profile by Twitch ID (from auth)
  */
 export async function getProfileByTwitchId(twitchId: string): Promise<Profile | null> {
-    if (!isSupabaseConfigured) return CURRENT_MOCK_USER;
+    if (!isSupabaseConfigured) {
+        return MOCK_PROFILES.find(p => p.twitch_id === twitchId) || (CURRENT_MOCK_USER.twitch_id === twitchId ? CURRENT_MOCK_USER : null);
+    }
 
     const { data, error } = await supabase
         .from('profiles')
@@ -22,7 +24,9 @@ export async function getProfileByTwitchId(twitchId: string): Promise<Profile | 
  * Get profile by UUID
  */
 export async function getProfile(userId: string): Promise<Profile | null> {
-    if (!isSupabaseConfigured) return CURRENT_MOCK_USER;
+    if (!isSupabaseConfigured) {
+        return MOCK_PROFILES.find(p => p.id === userId) || (CURRENT_MOCK_USER.id === userId ? CURRENT_MOCK_USER : null);
+    }
 
     const { data, error } = await supabase
         .from('profiles')
@@ -35,17 +39,13 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 }
 
 /**
- * Create a new profile — uses raw fetch to avoid Supabase JS client hanging
+ * Create a new profile
  */
 export async function createProfile(profileData: Partial<Profile> & { twitch_id: string; twitch_username: string }): Promise<Profile | null> {
     if (!isSupabaseConfigured) {
         return { ...CURRENT_MOCK_USER, ...profileData, is_registered: true } as Profile;
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    // Get the current session token
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         console.error('createProfile: No active session');
@@ -57,46 +57,22 @@ export async function createProfile(profileData: Partial<Profile> & { twitch_id:
         is_registered: true,
     };
 
-    console.log('createProfile: sending raw fetch to Supabase REST API...');
-
-    // Use AbortController for a hard 8-second timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
     try {
-        const response = await fetch(`${supabaseUrl}/rest/v1/profiles`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': supabaseAnonKey,
-                'Authorization': `Bearer ${session.access_token}`,
-                'Prefer': 'resolution=merge-duplicates,return=representation',
-            },
-            body: JSON.stringify(body),
-            signal: controller.signal,
-        });
+        const { data, error } = await supabase
+            .from('profiles')
+            .upsert(body, { onConflict: 'twitch_id' })
+            .select('*')
+            .single();
 
-        clearTimeout(timeoutId);
-
-        const responseText = await response.text();
-        console.log('createProfile response:', response.status, responseText);
-
-        if (!response.ok) {
-            console.error('createProfile HTTP error:', response.status, responseText);
+        if (error) {
+            console.error('createProfile error:', error);
             return null;
         }
 
-        const data = JSON.parse(responseText);
-        const profile = Array.isArray(data) ? data[0] : data;
-        console.log('createProfile success:', profile?.id);
-        return profile as Profile;
+        console.log('createProfile success:', data?.id);
+        return data as Profile;
     } catch (err: unknown) {
-        clearTimeout(timeoutId);
-        if (err instanceof Error && err.name === 'AbortError') {
-            console.error('createProfile: Request aborted (8s timeout)');
-        } else {
-            console.error('createProfile fetch error:', err);
-        }
+        console.error('createProfile exception:', err);
         return null;
     }
 }
@@ -133,21 +109,15 @@ export async function updateProfile(userId: string, updates: Partial<Profile>): 
 
 /**
  * Get profiles not yet swiped by the current user
- * Uses raw fetch to avoid Supabase client issues
  */
 export async function getDiscoverProfiles(userId: string): Promise<Profile[]> {
     if (!isSupabaseConfigured) return MOCK_PROFILES;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     try {
         console.log('[DISCOVER] Fetching profiles for user:', userId);
 
         const { data, error } = await supabase
             .rpc('get_profiles_to_swipe', { querying_user_id: userId });
-
-        clearTimeout(timeoutId);
 
         if (error) {
             console.error('[DISCOVER] RPC error:', error);
@@ -168,7 +138,6 @@ export async function getDiscoverProfiles(userId: string): Promise<Profile[]> {
         return [];
 
     } catch (err) {
-        clearTimeout(timeoutId);
         console.error('getDiscoverProfiles exception:', err);
         return [];
     }
@@ -178,7 +147,13 @@ export async function getDiscoverProfiles(userId: string): Promise<Profile[]> {
  * Get all registered profiles with pagination
  */
 export async function getAllProfiles(page: number = 0, limit: number = 20, excludeTwitchId?: string): Promise<Profile[]> {
-    if (!isSupabaseConfigured) return MOCK_PROFILES;
+    if (!isSupabaseConfigured) {
+        let profiles = MOCK_PROFILES;
+        if (excludeTwitchId) {
+            profiles = profiles.filter(p => p.twitch_id !== excludeTwitchId);
+        }
+        return profiles.slice(page * limit, (page + 1) * limit);
+    }
 
     const from = page * limit;
     const to = from + limit - 1;

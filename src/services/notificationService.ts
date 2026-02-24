@@ -1,0 +1,214 @@
+import { supabase } from '../lib/supabase';
+
+export type NotificationType = 'SPY' | 'SPY_RECIPROCAL' | 'EVENT_REQUEST' | 'EVENT_ACCEPT' | 'EVENT_REJECT' | 'EVENT_REMOVE' | 'ESPLORA_LIKE' | 'ESPLORA_COMMENT' | 'ESPLORA_REPLY';
+
+export interface Notification {
+    id: string;
+    user_id: string;
+    actor_id: string | null;
+    type: NotificationType;
+    reference_id: string | null;
+    read: boolean;
+    created_at: string;
+    actor_profile?: {
+        display_name: string;
+        twitch_username: string | null;
+        photo_1: string | null;
+    };
+}
+
+export const createNotification = async (
+    userId: string,
+    type: NotificationType,
+    actorId?: string,
+    referenceId?: string
+) => {
+    try {
+        console.log(`[NotificationService] Attempting to create: user_id=${userId}, type=${type}, actor_id=${actorId}`);
+        const { error } = await supabase
+            .from('notifications')
+            .insert({
+                user_id: userId,
+                actor_id: actorId || null,
+                type,
+                reference_id: referenceId || null
+            })
+            .select();
+
+        if (error) {
+            console.error('[NotificationService] Supabase insert error:', error);
+            throw error;
+        }
+
+        console.log('[NotificationService] Insert success!');
+        return true;
+    } catch (err: any) {
+        console.error('[NotificationService] Exception creating notification:', err);
+        return false;
+    }
+};
+
+export const checkReciprocalInterest = async (userId: string, actorId: string): Promise<boolean> => {
+    try {
+        // Check if there's already a 'SPY' notification sent from the target (actorId) to the current user (userId)
+        const { data, error } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('actor_id', actorId)
+            .in('type', ['SPY', 'SPY_RECIPROCAL'])
+            .limit(1);
+
+        if (error) throw error;
+        return (data && data.length > 0);
+    } catch (err) {
+        console.error('[NotificationService] Error checking reciprocal interest:', err);
+        return false;
+    }
+};
+
+export const checkMutualAnalysis = async (user1Id: string, user2Id: string): Promise<boolean> => {
+    try {
+        // Strategy 1: Check SPY/SPY_RECIPROCAL notifications in both directions
+        const { count: count1, error: error1 } = await supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user1Id)
+            .eq('actor_id', user2Id)
+            .in('type', ['SPY', 'SPY_RECIPROCAL']);
+
+        if (error1) throw error1;
+
+        const { count: count2, error: error2 } = await supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user2Id)
+            .eq('actor_id', user1Id)
+            .in('type', ['SPY', 'SPY_RECIPROCAL']);
+
+        if (error2) throw error2;
+
+        const mutualSpy = (count1 !== null && count1 > 0) && (count2 !== null && count2 > 0);
+        if (mutualSpy) return true;
+
+        // Strategy 2: Check compatibility_scores table (pair is stored with sorted IDs)
+        const [user_a, user_b] = [user1Id, user2Id].sort();
+        const { data: scoreRow, error: error3 } = await supabase
+            .from('compatibility_scores')
+            .select('score')
+            .eq('user_a', user_a)
+            .eq('user_b', user_b)
+            .maybeSingle();
+
+        if (error3) throw error3;
+
+        // If a score exists between these two users, chat is unlocked
+        if (scoreRow && scoreRow.score !== null) return true;
+
+        return false;
+    } catch (err) {
+        console.error('[NotificationService] Error checking mutual analysis:', err);
+        return false;
+    }
+};
+
+
+export const deleteSpyNotifications = async (userId: string, actorId: string): Promise<boolean> => {
+    try {
+        // Delete all 'SPY' or 'SPY_RECIPROCAL' notifications where:
+        // (user_id = userId AND actor_id = actorId) OR (user_id = actorId AND actor_id = userId)
+        // This effectively "resets" the spying state between these two users.
+        const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .in('type', ['SPY', 'SPY_RECIPROCAL'])
+            .or(`and(user_id.eq.${userId},actor_id.eq.${actorId}),and(user_id.eq.${actorId},actor_id.eq.${userId})`);
+
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error('[NotificationService] Error deleting spy notifications:', err);
+        return false;
+    }
+};
+
+export const getNotifications = async (userId: string): Promise<Notification[]> => {
+    try {
+        const { data, error } = await supabase
+            .from('notifications')
+            .select(`
+                *,
+                actor_profile:profiles!actor_id(display_name, twitch_username, photo_1)
+            `)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(50); // limit to recent 50 for performance
+
+        if (error) throw error;
+        return data as unknown as Notification[];
+    } catch (err) {
+        console.error('Error fetching notifications:', err);
+        return [];
+    }
+};
+
+export const markAsRead = async (notificationId: string) => {
+    try {
+        const { error } = await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('id', notificationId);
+
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error('Error marking notification as read:', err);
+        return false;
+    }
+};
+
+export const markAllAsRead = async (userId: string) => {
+    try {
+        const { error } = await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('user_id', userId)
+            .eq('read', false);
+
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error('Error marking all notifications as read:', err);
+        return false;
+    }
+};
+
+export const deleteNotification = async (notificationId: string) => {
+    try {
+        const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .eq('id', notificationId);
+
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error('Error deleting notification:', err);
+        return false;
+    }
+};
+
+export const deleteAllNotifications = async (userId: string) => {
+    try {
+        const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .eq('user_id', userId);
+
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error('Error deleting all notifications:', err);
+        return false;
+    }
+};

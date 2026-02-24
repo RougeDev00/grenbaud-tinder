@@ -69,7 +69,7 @@ export interface Match {
   created_at: string;
 }
 
-export type AppView = 'landing' | 'registration' | 'explore' | 'aimatch' | 'profile' | 'matches' | 'chat';
+export type AppView = 'landing' | 'registration' | 'explore' | 'aimatch' | 'events' | 'profile' | 'matches' | 'chat';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -77,4 +77,79 @@ export interface AuthState {
   isRegistered: boolean;
   currentUser: Profile | null;
   loading: boolean;
+}
+
+export type EventCategory = 'Gaming' | 'Chiacchiere' | 'Listening Party' | 'Reaction YouTube' | 'Altro';
+
+export interface Event {
+  id: string;
+  creator_id: string;
+  title: string;
+  description: string;
+  category: EventCategory;
+  banner_url: string | null;
+  event_time: string;
+  max_participants: number;
+  created_at: string;
+}
+
+export interface EventParticipant {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
+
+export interface EventWithDetails extends Event {
+  creator: Profile;
+  participants: (EventParticipant & { profile: Profile })[];
+}
+
+export interface EventMessage {
+  id: string;
+  event_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  sender?: Pick<Profile, 'id' | 'display_name' | 'twitch_username' | 'photo_1'>;
+}
+
+export interface EsploraPost {
+  id: string;
+  user_id: string;
+  content_type: 'text' | 'image' | 'video';
+  text_content: string | null;
+  media_url: string | null;
+  likes_count: number;
+  comments_count: number;
+  color_theme: string;
+  pos_x?: number;
+  pos_y?: number;
+  created_at: string;
+}
+
+export interface EsploraComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  parent_id?: string | null;
+  content: string;
+  created_at: string;
+}
+
+export interface EsploraCommentWithProfile extends EsploraComment {
+  profile: Pick<Profile, 'id' | 'display_name' | 'twitch_username' | 'photo_1'>;
+  replies?: EsploraCommentWithProfile[];
+}
+
+export type EsploraLiker = Pick<Profile, 'id' | 'twitch_username' | 'photo_1'> & {
+  pos_x?: number;
+  pos_y?: number;
+};
+
+export interface EsploraPostWithProfile extends EsploraPost {
+  profile: Profile;
+  hasLiked?: boolean;
+  likers: EsploraLiker[];
 }

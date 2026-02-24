@@ -1,0 +1,876 @@
+/* ============================== */
+/* TUTORIAL OVERLAY               */
+/* ============================== */
+
+.tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.tutorial-overlay--visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.tutorial-spotlight-svg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.tutorial-spotlight-ring {
+    position: fixed;
+    border-radius: 16px;
+    border: 2px solid rgba(139, 92, 246, 0.7);
+    box-shadow: 0 0 24px rgba(139, 92, 246, 0.45), inset 0 0 16px rgba(139, 92, 246, 0.15);
+    z-index: 2;
+    animation: spotlightPulse 2s infinite ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes spotlightPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 24px rgba(139, 92, 246, 0.4), inset 0 0 16px rgba(139, 92, 246, 0.15);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 40px rgba(139, 92, 246, 0.65), inset 0 0 20px rgba(139, 92, 246, 0.2);
+        transform: scale(1.05);
+    }
+}
+
+/* ============================== */
+/* TUTORIAL CARD                  */
+/* ============================== */
+
+.tutorial-card {
+    position: relative;
+    z-index: 3;
+    max-width: 460px;
+    width: 93%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 36px 30px 28px;
+    background: rgba(10, 8, 22, 0.95);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    border-radius: 28px;
+    text-align: center;
+    box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.65),
+        0 0 50px rgba(139, 92, 246, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.tutorial-card--enter {
+    animation: cardEnter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.tutorial-card--exit {
+    animation: cardExit 0.25s ease-in forwards;
+}
+
+@keyframes cardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes cardExit {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-18px) scale(0.97);
+    }
+}
+
+/* Step counter */
+.tutorial-step-counter {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.08em;
+    font-family: 'Outfit', sans-serif;
+}
+
+.tutorial-card-emoji {
+    font-size: 3.5rem;
+    margin-bottom: 14px;
+    animation: emojiFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.3));
+    line-height: 1;
+}
+
+@keyframes emojiFloat {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(-3deg);
+    }
+
+    50% {
+        transform: translateY(-7px) rotate(3deg);
+    }
+}
+
+.tutorial-card-title {
+    font-size: 1.65rem;
+    font-weight: 900;
+    margin: 0 0 10px;
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #a78bfa, #f472b6, #fbbf24);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 4s ease infinite;
+    line-height: 1.15;
+}
+
+@keyframes gradientShift {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.tutorial-card-desc {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1.6;
+    margin: 0 0 20px;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tutorial-card-detail {
+    margin-bottom: 22px;
+}
+
+/* Actions row */
+.tutorial-card-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+.tutorial-btn-next {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    border: none;
+    padding: 13px 32px;
+    border-radius: 14px;
+    font-size: 0.98rem;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    letter-spacing: 0.3px;
+}
+
+.tutorial-btn-next:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.55);
+}
+
+.tutorial-btn-next:active {
+    transform: translateY(0) scale(0.97);
+}
+
+.tutorial-btn-prev {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 13px 22px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tutorial-btn-prev:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Progress dots */
+.tutorial-progress {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.tutorial-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+}
+
+.tutorial-dot--active {
+    width: 22px;
+    border-radius: 3.5px;
+    background: linear-gradient(90deg, #8b5cf6, #f472b6);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+.tutorial-dot--done {
+    background: rgba(139, 92, 246, 0.45);
+}
+
+/* Skip */
+.tutorial-skip {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 10001;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.45);
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+}
+
+.tutorial-skip:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================== */
+/* EXISTING: BADGE DEMO (Step 3)  */
+/* ============================== */
+
+.tutorial-badges-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: left;
+}
+
+.tutorial-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tutorial-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: 800;
+    flex-shrink: 0;
+    min-width: 78px;
+    justify-content: center;
+}
+
+.tutorial-badge-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.tutorial-badge-score {
+    font-weight: 900;
+    font-size: 0.9rem;
+}
+
+.tutorial-badge-tag {
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+.tutorial-badge--estimated {
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 0.8rem;
+}
+
+.tutorial-badge--final {
+    background: linear-gradient(135deg, #f472b6, #a855f7);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+    animation: tutorialBadgeGlow 2s infinite alternate;
+}
+
+@keyframes tutorialBadgeGlow {
+    from {
+        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+    }
+
+    to {
+        box-shadow: 0 4px 25px rgba(168, 85, 247, 0.65);
+    }
+}
+
+.tutorial-badge-explain {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    gap: 3px;
+}
+
+.tutorial-badge-explain strong {
+    font-size: 0.82rem;
+    color: white;
+    font-weight: 700;
+}
+
+.tutorial-badge-explain span {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.3;
+}
+
+.tutorial-badge-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 0;
+}
+
+.tutorial-badge-divider span {
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.2);
+    letter-spacing: 3px;
+}
+
+/* ============================== */
+/* STEP 1 — Welcome               */
+/* ============================== */
+
+.tut-welcome-logos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.tut-logo-glow {
+    font-size: 2.2rem;
+    animation: emojiFloat 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.4));
+}
+
+.tut-logo-plus {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================== */
+/* STEP 2 — Esplora Grid          */
+/* ============================== */
+
+.tut-grid-demo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    text-align: left;
+}
+
+.tut-grid-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: cardEnter 0.4s ease both;
+}
+
+.tut-grid-avatar {
+    font-size: 1.4rem;
+}
+
+.tut-grid-info {
+    flex: 1;
+}
+
+.tut-grid-name {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    margin-bottom: 5px;
+    width: 70%;
+}
+
+.tut-mini-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    color: #c4b5fd;
+    padding: 2px 6px;
+    border-radius: 99px;
+}
+
+/* ============================== */
+/* STEP 4 — AI Match              */
+/* ============================== */
+
+.tut-match-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+}
+
+.tut-match-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.tut-match-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.tut-match-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.tut-match-text strong {
+    font-size: 0.85rem;
+    color: #e9d5ff;
+}
+
+.tut-match-text span {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.4;
+}
+
+/* ============================== */
+/* STEP 5 — Chat Unlock           */
+/* ============================== */
+
+.tut-unlock-demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: left;
+}
+
+.tut-unlock-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 10px 14px;
+    width: 100%;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tut-unlock-step--success {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+}
+
+.tut-unlock-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    color: #c4b5fd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.tut-unlock-num--success {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #6ee7b7;
+}
+
+.tut-unlock-arrow {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================== */
+/* STEP 6 — Feed Post             */
+/* ============================== */
+
+.tut-feed-demo {
+    text-align: left;
+}
+
+.tut-post-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 14px;
+}
+
+.tut-post-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.tut-post-avatar {
+    font-size: 1.6rem;
+}
+
+.tut-post-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.tut-post-meta strong {
+    font-size: 0.82rem;
+    color: #fff;
+}
+
+.tut-post-meta span {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.tut-post-text {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.72);
+    margin: 0 0 10px;
+    line-height: 1.4;
+}
+
+.tut-post-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.tut-action-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: default;
+}
+
+.tut-action-btn--like {
+    background: rgba(244, 63, 94, 0.12);
+    border-color: rgba(244, 63, 94, 0.25);
+    color: #f87171;
+}
+
+/* ============================== */
+/* STEP 7 — Replies               */
+/* ============================== */
+
+.tut-replies-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.tut-comment {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.tut-comment-avatar {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.tut-comment-avatar--sm {
+    font-size: 1.1rem;
+}
+
+.tut-comment-body {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.tut-comment-body strong {
+    font-size: 0.8rem;
+    color: #e9d5ff;
+}
+
+.tut-comment-body p {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 3px 0 6px;
+}
+
+.tut-comment-time {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.3);
+    margin-left: 6px;
+}
+
+.tut-reply-btn {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #a78bfa;
+    background: none;
+    border: none;
+    cursor: default;
+    padding: 0;
+}
+
+.tut-nested-reply {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-left: 30px;
+}
+
+.tut-reply-arrow {
+    font-size: 0.9rem;
+    color: rgba(168, 85, 247, 0.5);
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+/* ============================== */
+/* STEP 8 — Events                */
+/* ============================== */
+
+.tut-events-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.tut-event-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.tut-event-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.tut-event-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.tut-event-info strong {
+    font-size: 0.8rem;
+    color: #fff;
+}
+
+.tut-event-info span {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.40);
+}
+
+.tut-event-btn {
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    color: #c4b5fd;
+    padding: 3px 9px;
+    border-radius: 99px;
+    cursor: default;
+    margin-top: 3px;
+    width: fit-content;
+}
+
+/* ============================== */
+/* STEP 9 — Notifications         */
+/* ============================== */
+
+.tut-notifs-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    text-align: left;
+}
+
+.tut-notif-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 8px 10px;
+    animation: cardEnter 0.4s ease both;
+}
+
+.tut-notif-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.tut-notif-text {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1.3;
+}
+
+/* ============================== */
+/* STEP 10 — Profile Tips         */
+/* ============================== */
+
+.tut-profile-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    text-align: left;
+}
+
+.tut-profile-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1.3;
+}
+
+.tut-profile-tip span:first-child {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.tut-profile-tip strong {
+    color: #e9d5ff;
+}
+
+/* ============================== */
+/* MOBILE                         */
+/* ============================== */
+
+@media (max-width: 480px) {
+    .tutorial-card {
+        padding: 28px 18px 22px;
+        border-radius: 22px;
+    }
+
+    .tutorial-card-emoji {
+        font-size: 2.8rem;
+    }
+
+    .tutorial-card-title {
+        font-size: 1.4rem;
+    }
+
+    .tutorial-card-desc {
+        font-size: 0.88rem;
+    }
+
+    .tutorial-btn-next {
+        padding: 11px 24px;
+        font-size: 0.92rem;
+    }
+
+    .tutorial-btn-prev {
+        padding: 11px 16px;
+        font-size: 0.85rem;
+    }
+
+    .tut-grid-demo {
+        grid-template-columns: 1fr 1fr;
+    }
+}

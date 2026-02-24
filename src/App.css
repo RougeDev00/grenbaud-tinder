@@ -3,6 +3,8 @@
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
+    padding-top: 56px;
+    /* fixed top header height */
     padding-bottom: 68px;
 }
 
@@ -10,14 +12,31 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 20px;
-    background: rgba(6, 5, 11, 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-subtle);
+    padding: 0 20px;
+    height: 58px;
+    background: linear-gradient(180deg, rgba(6, 5, 11, 0.85) 0%, rgba(6, 5, 11, 0.6) 100%);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    border-bottom: none;
     position: sticky;
     top: 0;
     z-index: 50;
+}
+
+/* Animated gradient line under header */
+.app-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(124, 58, 237, 0.3) 20%,
+            rgba(168, 85, 247, 0.6) 50%,
+            rgba(124, 58, 237, 0.3) 80%,
+            transparent 100%);
 }
 
 .app-logo {
@@ -27,13 +46,22 @@
     letter-spacing: -0.03em;
 }
 
-.app-logo-img {
-    height: auto;
-    max-height: 34px;
-    /* Reduced "un pelo" */
-    width: auto;
-    object-fit: contain;
-    display: block;
+.app-logo-text {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 1.6rem;
+    letter-spacing: 0.35em;
+    color: #e8e0f0;
+    text-shadow:
+        0 0 10px rgba(139, 92, 246, 0.4),
+        0 0 30px rgba(139, 92, 246, 0.15);
+    transition: text-shadow 0.3s ease;
+    user-select: none;
+}
+
+.app-logo-text:hover {
+    text-shadow:
+        0 0 12px rgba(168, 85, 247, 0.6),
+        0 0 40px rgba(168, 85, 247, 0.2);
 }
 
 .app-main {
@@ -54,8 +82,8 @@
     height: 100%;
     max-width: 600px;
     max-height: 800px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
-    filter: blur(40px);
+    /* Use a softer radial gradient that naturally fades out to avoid needing CSS blur */
+    background: radial-gradient(circle at center, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.05) 40%, transparent 70%);
     z-index: -1;
     pointer-events: none;
     animation: spotlight-pulse 4s ease-in-out infinite alternate;

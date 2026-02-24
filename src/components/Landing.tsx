@@ -119,7 +119,7 @@ const Landing: React.FC<LandingProps> = ({ onLogin }) => {
                     </a>
                 </p>
 
-                <p style={{ opacity: 0.7, fontSize: '0.8rem', marginTop: '1rem', color: 'rgba(255,255,255,0.5)' }}>v0.2.3-fix</p>
+                <p style={{ opacity: 0.7, fontSize: '0.8rem', marginTop: '1rem', color: 'rgba(255,255,255,0.5)' }}>v0.2.5-fix</p>
             </div>
 
             {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}

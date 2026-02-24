@@ -56,7 +56,7 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
     const [citySuggestions, setCitySuggestions] = useState<{ name: string, lat: string, lon: string }[]>([]);
     const [isFetchingCities, setIsFetchingCities] = useState(false);
     const [showCityDropdown, setShowCityDropdown] = useState(false);
-    const citySearchTimeoutInfo = useRef<NodeJS.Timeout | null>(null);
+    const citySearchTimeoutInfo = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [statusMessage, setStatusMessage] = useState(''); // New status message for UI feedback
 

@@ -114,6 +114,14 @@
     line-height: 1;
 }
 
+.profile-card-username {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 2px 0 0 0;
+    font-weight: 500;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
 .profile-card-age {
     font-size: 1.1rem;
     font-weight: 500;
@@ -191,7 +199,6 @@
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Match Badge Base */
 .match-badge {
     position: absolute;
     top: 12px;
@@ -206,47 +213,181 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     font-weight: 800;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     animation: fadeInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.match-score-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.match-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+    opacity: 0.8;
+}
+
+/* ==================== */
+/* ESTIMATED BADGE      */
+/* ==================== */
+
+.match-badge--estimated {
+    font-size: 0.8rem;
+    padding: 5px 11px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    background: rgba(0, 0, 0, 0.55) !important;
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(12px);
+    animation: none;
+}
+
+.match-badge--estimated .match-icon {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.match-badge--estimated .match-percent {
+    font-weight: 700;
+}
+
+.match-badge--estimated .match-label {
+    display: none;
+}
+
+/* ==================== */
+/* FINAL AI BADGE       */
+/* ==================== */
+
+.match-badge--final {
+    font-size: 1.15rem;
+    padding: 10px 18px;
+    border-radius: 16px;
+    top: 10px;
+    right: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.match-badge--final .match-icon {
+    font-size: 1.3rem;
+}
+
+.match-badge--final .match-label {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.match-badge--final::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background-size: 200% 200%;
+    animation: shimmerEffect 3s infinite linear;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes shimmerEffect {
+    0% {
+        background-position: -200% -200%;
+    }
+
+    100% {
+        background-position: 200% 200%;
+    }
 }
 
 /* === TIER STYLES === */
 
-/* Estimated - Neutral/Provisional */
+/* Estimated - Neutral/Provisional (overridden above, keep for specificity) */
 .match-tier-estimated {
-    background: rgba(0, 0, 0, 0.4);
-    color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(8px);
-    box-shadow: none;
-    /* No glow for estimated */
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Titanico (90+) - Gold/Purple/Magic */
+/* Titanico (85+) - Gold/Purple/Magic */
 .match-tier-titan {
     background: linear-gradient(135deg, #FFD700, #FDB931, #a855f7);
     background-size: 200% 200%;
     color: #1a0b2e;
     border: 1px solid rgba(255, 215, 0, 0.5);
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
-    animation: gradientFlow 3s ease infinite, fadeInScale 0.4s ease-out;
 }
 
-/* Alto (80-89) - Hot Pink/Purple */
+.match-badge--final.match-tier-titan {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), 0 8px 30px rgba(0, 0, 0, 0.6);
+    animation: gradientFlow 3s ease infinite, fadeInScale 0.4s ease-out, heartbeat 2s ease-in-out infinite;
+}
+
+/* Alto (70-84) - Hot Pink/Purple */
 .match-tier-high {
-    background: linear-gradient(135deg, #ec4899, #a855f7);
+    background: linear-gradient(135deg, #f472b6, #a855f7);
     color: white;
-    border: 1px solid rgba(236, 72, 153, 0.5);
-    box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
+    border: 1px solid rgba(244, 114, 182, 0.5);
 }
 
-/* Buono (60-79) - Blue/Purple */
-.match-tier-good {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    border: 1px solid rgba(99, 102, 241, 0.5);
+.match-badge--final.match-tier-high {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
 }
+
+/* Buono (45-69) - Vibrant Cyan/Green */
+.match-tier-good {
+    background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
+    color: white;
+    border: 1px solid rgba(45, 212, 191, 0.5);
+}
+
+.match-badge--final.match-tier-good {
+    box-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
+    background: linear-gradient(135deg, #10b981, #3b82f6);
+}
+
+/* Neutro (25-44) - Soft Slate/Gray */
+.match-tier-neutral {
+    background: rgba(71, 85, 105, 0.6);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.match-badge--final.match-tier-neutral {
+    background: rgba(51, 65, 85, 0.9);
+}
+
+/* Freddo (< 25) - Icy Blue/Gray */
+.match-tier-cold {
+    background: rgba(30, 41, 59, 0.8);
+    color: #94a3b8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+@keyframes heartbeat {
+
+    0%,
+    100% {
+        transform: scale(1.05);
+    }
+
+    50% {
+        transform: scale(1.12);
+    }
+}
+
 
 /* Neutro (<60) - Glass/Gray */
 .match-tier-mid {

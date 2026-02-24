@@ -1,25 +1,443 @@
 .profile-grid-container {
     padding: 20px;
     padding-bottom: 80px;
-    /* Navbar space */
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.grid-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
 }
 
 .grid-title {
     font-size: 1.5rem;
     font-weight: 700;
-    margin-bottom: 20px;
     background: var(--gradient-primary);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
+/* ============================== */
+/* SEARCH BAR                     */
+/* ============================== */
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.search-bar-input-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-bar-icon {
+    position: absolute;
+    left: 14px;
+    color: rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+}
+
+.search-bar-input {
+    width: 100%;
+    padding: 12px 40px 12px 42px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.25s ease;
+}
+
+.search-bar-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.search-bar-input:focus {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.06);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.search-clear {
+    position: absolute;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.search-clear:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: white;
+}
+
+/* ============================== */
+/* FILTER TOGGLE                  */
+/* ============================== */
+
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.filter-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.filter-toggle--open {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #a78bfa;
+}
+
+.filter-toggle--active {
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.filter-count {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 8px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* ============================== */
+/* FILTER PANEL                   */
+/* ============================== */
+
+.filter-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    opacity: 0;
+}
+
+.filter-panel--open {
+    max-height: 800px;
+    opacity: 1;
+}
+
+.filter-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background: rgba(18, 18, 24, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+/* ============================== */
+/* FILTER CHIPS (Gender)          */
+/* ============================== */
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-chip {
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.filter-chip--active {
+    background: rgba(139, 92, 246, 0.25);
+    border-color: rgba(139, 92, 246, 0.6);
+    color: white;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+}
+
+/* ============================== */
+/* FILTER INPUTS                  */
+/* ============================== */
+
+.filter-input {
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.filter-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.filter-input:focus {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.06);
+}
+
+.filter-input--age {
+    width: 80px;
+    text-align: center;
+}
+
+/* Hide number spin buttons */
+.filter-input--age::-webkit-inner-spin-button,
+.filter-input--age::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.filter-age-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.filter-age-sep {
+    color: rgba(255, 255, 255, 0.15);
+    font-weight: 300;
+}
+
+/* ============================== */
+/* KM RANGE SLIDER                */
+/* ============================== */
+
+.filter-km-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.filter-km-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    outline: none;
+}
+
+.filter-km-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    transition: transform 0.15s ease;
+}
+
+.filter-km-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.filter-km-value {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--primary-light);
+    white-space: nowrap;
+    min-width: 55px;
+    text-align: right;
+}
+
+.filter-geo-loading {
+    animation: geoPulse 1s infinite ease-in-out;
+}
+
+@keyframes geoPulse {
+
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+/* ============================== */
+/* FILTER ACTIONS                 */
+/* ============================== */
+
+.filter-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.filter-apply-btn {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    flex: 2;
+}
+
+.filter-apply-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+    filter: brightness(1.1);
+}
+
+.filter-apply-btn:active {
+    transform: translateY(0);
+}
+
+/* ============================== */
+/* CLEAR FILTERS                  */
+/* ============================== */
+
+.filter-clear-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.filter-clear-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ============================== */
+/* RESULTS COUNT                  */
+/* ============================== */
+
+.grid-results-count {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+
+.grid-results-count span {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* ============================== */
+/* PROFILE GRID                   */
+/* ============================== */
+
+.profile-grid-container {
+    padding: 20px 30px;
+    padding-bottom: 80px;
+    max-width: 100%;
+    /* Spans full width, starting exactly from the edges */
+    width: 100%;
+    margin: 0 auto;
+}
+
 .profile-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
+    /* Force exactly 5 columns across the full screen */
+    grid-template-columns: repeat(5, 1fr);
+    gap: 24px;
 }
 
 .grid-card-wrapper {
@@ -27,60 +445,38 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    /* Force aspect ratio or height if needed, but ProfileCard handles it usually. 
-       ProfileCard might need height adjustment for grid though. */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
     aspect-ratio: 3/4;
+
+    /* Animation base */
+    opacity: 0;
+    /* TranslateX depends on var(--slide-dir) which is either 1 (left) or -1 (right) */
+    transform: translateX(calc(-100px * var(--slide-dir, 1))) scale(0.95);
+    animation: slideInEdge 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: calc(var(--animation-order, 0) * 0.04s);
 }
 
-/* Adjust ProfileCard for grid usage */
+@keyframes slideInEdge {
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
 .grid-card-wrapper .profile-card {
     height: 100%;
     width: 100%;
     border-radius: 0;
-    /* Removed pointer-events: none to allow photo nav */
 }
 
-/* Override absolute positioning of ProfileCard internal elements if necessary 
-   Currently ProfileCard is designed for the deck (absolute). 
-   We might need to make ProfileCard more flexible or wrap it differently.
-   
-   Actually, ProfileCard uses 100% width/height. So if wrapper has size, it works.
-*/
-
 .grid-card-wrapper:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) !important;
     box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
 }
 
-.grid-card-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    pointer-events: none;
-    z-index: 20;
-    /* Ensure it is above photos (z-index 1-2) */
-    /* Don't block the card underneath */
-}
-
-.profile-card.is-center-hovered .grid-card-overlay {
-    opacity: 1;
-}
-
-.grid-card-overlay span {
-    color: white;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(4px);
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-}
+/* ============================== */
+/* EMPTY STATE                    */
+/* ============================== */
 
 .grid-loading,
 .grid-empty {
@@ -91,6 +487,16 @@
     height: 300px;
     color: var(--text-secondary);
 }
+
+.grid-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+/* ============================== */
+/* BACK BUTTON & DETAIL VIEW      */
+/* ============================== */
 
 .btn-back {
     background: rgba(255, 255, 255, 0.03);
@@ -136,10 +542,87 @@
     transform: scale(1.1);
 }
 
-/* Responsive adjustments */
+.btn-demo {
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-demo:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.btn-demo--active {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* ============================== */
+/* RESPONSIVE                     */
+/* ============================== */
+
 @media (min-width: 600px) {
     .profile-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+    }
+}
+
+/* ============================== */
+/* RESPONSIVE                     */
+/* ============================== */
+
+@media (max-width: 1400px) {
+    .profile-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .profile-grid-container {
+        padding: 20px;
+    }
+
+    .profile-grid {
+        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-grid-container {
+        padding: 16px 12px;
+    }
+
+    .profile-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .search-bar {
+        flex-direction: column;
+    }
+
+    .filter-panel-inner {
+        padding: 16px;
+    }
+
+    .filter-input--age {
+        width: 60px;
     }
 }

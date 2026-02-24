@@ -1,6 +1,7 @@
 import { StrictMode, Component } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import AdminApp from './components/AdminApp'
@@ -46,7 +47,9 @@ const path = window.location.pathname;
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      {path === '/admin' ? <AdminApp /> : <App />}
+      <BrowserRouter>
+        {path === '/admin' ? <AdminApp /> : <App />}
+      </BrowserRouter>
     </ErrorBoundary>
   </StrictMode>,
 )

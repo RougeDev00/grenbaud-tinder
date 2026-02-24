@@ -1,13 +1,33 @@
-import OpenAI from 'openai';
 import type { Profile } from '../types';
 import { PERSONALITY_QUESTIONS } from '../data/personalityQuestions';
-// DB imports removed since we only use local cache for AI explanations
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { createNotification, checkReciprocalInterest } from './notificationService';
+
+// Direct fetch helper for Edge Functions (bypasses JWT verification issues)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+async function callEdgeFunction(body: Record<string, unknown>): Promise<any> {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-ai`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Edge Function error ${res.status}: ${errText}`);
+    }
+    return res.json();
+}
 
 // Session storage key
-const CACHE_KEY_PREFIX = 'baudr_compatibility_v6_';
+const CACHE_KEY_PREFIX = 'baudr_compatibility_v7_';
 
 export const getCompatibilityCacheKey = (id1: string, id2: string) => {
-    return CACHE_KEY_PREFIX + [id1, id2].sort().join('-');
+    return CACHE_KEY_PREFIX + `${id1}-${id2}`;
 };
 
 export const getCachedCompatibility = (key: string): { score: number, explanation: string } | null => {
@@ -19,32 +39,83 @@ export const getCachedCompatibility = (key: string): { score: number, explanatio
     }
 };
 
-const setCachedCompatibility = (key: string, data: { score: number, explanation: string }) => {
+/**
+ * Scan localStorage for all AI-confirmed compatibility scores >= minScore for a given user.
+ * Returns [{ partnerId, score }] sorted by score descending.
+ */
+export const getHighScoringMatches = (userId: string, minScore: number = 80): { partnerId: string; score: number }[] => {
+    const results: { partnerId: string; score: number }[] = [];
     try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key || !key.startsWith(CACHE_KEY_PREFIX)) continue;
+            const pairStr = key.replace(CACHE_KEY_PREFIX, '');
+            const ids = pairStr.split('-');
+            if (ids.length !== 2) continue;
+            // Check if this user is one of the pair
+            const partnerId = ids[0] === userId ? ids[1] : ids[1] === userId ? ids[0] : null;
+            if (!partnerId) continue;
+            const data = getCachedCompatibility(key);
+            if (data && data.score >= minScore) {
+                results.push({ partnerId, score: data.score });
+            }
+        }
+    } catch (e) {
+        console.warn('Error scanning compatibility cache:', e);
+    }
+    return results.sort((a, b) => b.score - a.score);
+};
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+/** Sort two UUIDs so user_a is always the smaller one (matches DB constraint) */
+const sortedPair = (id1: string, id2: string): [string, string] =>
+    id1 < id2 ? [id1, id2] : [id2, id1];
+
+const setCachedCompatibility = async (
+    id1: string,
+    id2: string,
+    data: { score: number; explanation: string }
+): Promise<void> => {
+    // 1. Always write to localStorage for instant UI feedback
+    try {
+        const key = getCompatibilityCacheKey(id1, id2);
         localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
-        console.warn('LocalStorage full or unavailable', e);
+        console.warn('LocalStorage write failed', e);
+    }
+
+    // 2. Persist to Supabase (source of truth)
+    if (!isSupabaseConfigured) return;
+    try {
+        const [user_a, user_b] = sortedPair(id1, id2);
+        const { error } = await supabase
+            .from('compatibility_scores')
+            .upsert(
+                { user_a, user_b, score: data.score, explanation: data.explanation },
+                { onConflict: 'user_a,user_b' }
+            );
+        if (error) console.error('[DB] Error saving compatibility score:', error);
+        else console.log('[DB] Compatibility score saved.');
+    } catch (e) {
+        console.error('[DB] Exception saving compatibility score:', e);
     }
 };
 
-const getOpenAIClient = () => {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    if (!apiKey) {
-        console.warn('OpenAI API Key missing in .env');
-        return null;
+export const clearCompatibilityCache = (id1: string, id2: string) => {
+    const key = getCompatibilityCacheKey(id1, id2);
+    try {
+        localStorage.removeItem(key);
+    } catch (e) {
+        console.warn('Failed to clear compatibility cache', e);
     }
-    return new OpenAI({
-        apiKey: apiKey,
-        dangerouslyAllowBrowser: true // Required for client-side usage (note: risky for production apps without backend proxy)
-    });
 };
 
 export const generateProfileSummary = async (
     profile: Partial<Profile>,
     answers?: Record<number, number>
 ): Promise<string | null> => {
-    const openai = getOpenAIClient();
-    if (!openai) return null;
+    if (!isSupabaseConfigured) return null;
 
     try {
         let answerDetails = '';
@@ -104,12 +175,8 @@ ${answerDetails}
 SCRIVI IL TESTO ORA. RICORDA: Ogni omissione è un errore. Ogni invenzione (tipo "sogno da astronauta") è un errore gravissimo.
 `;
 
-        const completion = await openai.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "gpt-4o-mini",
-        });
-
-        return completion.choices[0]?.message?.content || null;
+        const data = await callEdgeFunction({ action: 'summary', payload: { prompt: prompt } });
+        return data?.content || null;
     } catch (error) {
         console.error('[AI] Error generating summary:', error);
         return null;
@@ -120,8 +187,7 @@ export const generatePersonalityAnalysis = async (
     profile: Partial<Profile>,
     answers: Record<number, number>
 ): Promise<string | null> => {
-    const openai = getOpenAIClient();
-    if (!openai) return null;
+    if (!isSupabaseConfigured) return null;
 
     try {
         let answerDetails = '\nRisposte Dettagliate:\n';
@@ -155,26 +221,50 @@ L'utente vuole un'analisi specifica che faccia riferimento alle sue risposte. Li
 Restituisci solo l'analisi, senza introduzioni.
 `;
 
-        const completion = await openai.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "gpt-4o-mini",
-        });
-
-        return completion.choices[0]?.message?.content || null;
+        const data = await callEdgeFunction({ action: 'personality', payload: { prompt: prompt } });
+        return data?.content || null;
     } catch (error) {
         console.error('[AI] Error generating personality analysis:', error);
         return null;
     }
 };
 
-export const getStoredCompatibility = async (id1: string, id2: string): Promise<{ score: number, explanation: string } | null> => {
-    // 1. Check local cache first for instant feedback
+export const getStoredCompatibility = async (
+    id1: string,
+    id2: string
+): Promise<{ score: number; explanation: string } | null> => {
+    // 1. Check localStorage for instant feedback
     const key = getCompatibilityCacheKey(id1, id2);
     const cached = getCachedCompatibility(key);
     if (cached) return cached;
 
-    // We only rely on local cache now. DB logic removed.
-    return null;
+    // 2. Check Supabase (source of truth)
+    if (!isSupabaseConfigured) return null;
+    try {
+        const [user_a, user_b] = sortedPair(id1, id2);
+        const { data, error } = await supabase
+            .from('compatibility_scores')
+            .select('score, explanation')
+            .eq('user_a', user_a)
+            .eq('user_b', user_b)
+            .maybeSingle();
+
+        if (error) {
+            console.error('[DB] Error fetching compatibility score:', error);
+            return null;
+        }
+        if (!data) return null;
+
+        // Hydrate localStorage cache so next call is instant
+        try {
+            localStorage.setItem(key, JSON.stringify(data));
+        } catch (_) {/* ignore */ }
+
+        return data as { score: number; explanation: string };
+    } catch (e) {
+        console.error('[DB] Exception fetching compatibility score:', e);
+        return null;
+    }
 };
 
 export const generateCompatibilityExplanation = async (
@@ -186,69 +276,103 @@ export const generateCompatibilityExplanation = async (
 
     // We no longer check the DB for existing scores, allowing each user to generate their own.
 
-    const openai = getOpenAIClient();
-    if (!openai) return null;
+    if (!isSupabaseConfigured) return null;
 
     try {
         const prompt = `
-Sei un analista di relazioni per la community "Baudr" di GrenBaud. 
-Il tuo obiettivo è spiegare PERCHÉ due utenti hanno una determinata compatibilità, basandoti sui loro interessi. 
+Sei un brillante e spietato analista di relazioni per la community "Baudr" di GrenBaud. 
+Il tuo obiettivo è CALCOLARE LA PERCENTUALE DI COMPATIBILITÀ REALE (da 1 a 100) tra due utenti e spiegare PERCHÉ la pensi così, basandoti sui loro interessi e personalità.
 
-Il punteggio matematico calcolato dal sistema è ESATTAMENTE ${currentScore}%. 
-**NON MODIFICARE QUESTO PUNTEGGIO.** Il tuo compito è solo giustificarlo analizzando cosa hanno in comune (es. ascoltano gli stessi artisti, seguono gli stessi streamer) o cosa li differenzia.
+Il sistema ha stimato un punteggio base temporaneo matematico di ${currentScore}%.
+**IGNORA QUESTO PUNTEGGIO SE RITIENI CHE LA COMPATIBILITÀ SEMANTICA SIA DIVERSA E CALCOLA TÚ IL PUNTEGGIO FINALE!**
 
 DATI UTENTE 1 (${user1.display_name}):
 - Bio: ${user1.bio}
-- Interessi: ${user1.hobbies}, ${user1.music_artists}
-- Personalità: ${user1.personality_type}
+- Interessi e Passioni: ${user1.hobbies}, ${user1.music}, ${user1.music_artists}
+- Segue su Twitch/YouTube: ${user1.twitch_watches}, ${user1.twitch_streamers}, ${user1.youtube}, ${user1.youtube_channels}
+- Personalità (MBTI): ${user1.personality_type}
 - GrenBaud è: ${user1.grenbaud_is}
 - Domande: Sogno: ${user1.question_dream}, Weekend: ${user1.question_weekend}, Red Flag: ${user1.question_redflag}
 
 DATI UTENTE 2 (${user2.display_name}):
 - Bio: ${user2.bio}
-- Interessi: ${user2.hobbies}, ${user2.music_artists}
-- Personalità: ${user2.personality_type}
+- Interessi e Passioni: ${user2.hobbies}, ${user2.music}, ${user2.music_artists}
+- Segue su Twitch/YouTube: ${user2.twitch_watches}, ${user2.twitch_streamers}, ${user2.youtube}, ${user2.youtube_channels}
+- Personalità (MBTI): ${user2.personality_type}
 - GrenBaud è: ${user2.grenbaud_is}
 - Domande: Sogno: ${user2.question_dream}, Weekend: ${user2.question_weekend}, Red Flag: ${user2.question_redflag}
 
-REGOLE:
-- **ANALISI PROFONDA E LUNGA**: Non fare riassuntini. Scrivi un'analisi dettagliata (2-3 paragrafi belli corposi).
-- **ELENCA TUTTO**: Devi assolutamente citare ESPLICITAMENTE tutti gli artisti musicali, streamer (es. Blur), youtuber (es. Ale della Giusta) e hobby che hanno in comune. Non generalizzare, fai i NOMI.
-- **CONSIDERAZIONI INTERESSANTI**: Analizza come i loro tipi MBTI, i loro sogni e le loro "Red Flag" si incastrano. Fai riflessioni psicologiche e divertenti su come interagirebbero nella vita reale o in chat.
-- **TONO**: Schietto, da community di GrenBaud, ma intelligente e argomentato.
+CRITERI DI VALUTAZIONE DEL SUO PUNTEGGIO FONDAMENTALI:
+1. **PESO ENORME AGLI INTERESSI IN COMUNE O AFFINI (IL 60% DEL VALORE):** Analizza in modo "furbo" l'affinità semantica. Se a uno piace "viaggiare" e all'altro "scoprire", o entrambi seguono streamer simili, ascoltano musica simile o frequentano ambienti simili (es. entrambi escono molto o entrambi sono casalinghi), il punteggio DEVE partire da una base molto alta (minimo 60%-70%). Anche un singolo interesse molto forte in comune vale tantissimo.
+2. **PERSONALITÀ E RISPOSTE (IL 40% DEL VALORE):** Valuta come le personalità MBTI si incastrano (se note) e come divergono i loro sogni/weekend/red flag. Le differenze compensative possono essere positive, le visioni del mondo drammaticamente opposte sono negative. Aggiusta il punteggio di conseguenza.
+
+REGOLE PER L'ANALISI SCRITTA:
+- **ANALISI PROFONDA E LUNGA**: Non fare riassuntini. Scrivi un'analisi argomentata e corposa (2-3 paragrafi).
+- **ELENCA TUTTO**: Devi assolutamente citare ESPLICITAMENTE tutti gli artisti musicali, streamer, youtuber e hobby affini. Fai i NOMI e spiega perché li accomunano.
+- **TONO**: Schietto, da community di GrenBaud, intelligente ma psicologico, anche un po' ironico e argomentato. Niente banalità.
 - Restituisci RIGOROSAMENTE un oggetto JSON valido.
 
 FORMATO JSON RICHIESTO:
 {
-  "score": ${currentScore},
-  "explanation": "testo della spiegazione..."
+  "score": (INSERISCI QUI IL NUOVO PUNTEGGIO CALCOLATO DA TE DA 1 A 100 IN FORMATO NUMERICO, ignorando se vuoi quello iniziale o tenendolo in considerazione),
+  "explanation": "testo della spiegazione (usa i paragrafi con \n\n)..."
 }
 `;
 
-        const completion = await openai.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "gpt-4o-mini",
-            response_format: { type: "json_object" }
-        });
+        const result = await callEdgeFunction({ action: 'compatibility', payload: { prompt: prompt } });
+        console.log('[AI] Processed compatibility response:', result);
 
-        const content = completion.choices[0]?.message?.content;
-        if (!content) return null;
+        if (!result) throw new Error("L'API non ha restituito contenuto. Riprova più tardi.");
 
-        const result = JSON.parse(content) as { score: number, explanation: string };
+        // Error handling if data wasn't JSON formatted already
+        if (result && result.explanation) {
+            // Use the score from the object if present, otherwise fallback to currentScore
+            const finalResult = {
+                score: result.score || currentScore,
+                explanation: result.explanation
+            };
 
-        if (result && result.score && result.explanation) {
-            // We no longer save to the DB, keeping it 100% local cache.
+            // Persist to DB + localStorage
+            await setCachedCompatibility(user1.id, user2.id, finalResult);
 
-            // 3. Save to Local Cache (Speed)
-            const cacheKey = getCompatibilityCacheKey(user1.id, user2.id);
-            setCachedCompatibility(cacheKey, result);
+            // Notify user2 that user1 spied on them
+            // Check if user2 had already spied on user1 (reciprocal interest)
+            // We now check the database directly because localStorage is private to each browser/user
+            const user2AlreadySpied = await checkReciprocalInterest(user1.id, user2.id);
+            const notificationType = user2AlreadySpied ? 'SPY_RECIPROCAL' : 'SPY';
 
-            return result;
+            createNotification(user2.id, notificationType, user1.id).catch(err =>
+                console.error(`[AI] Failed to send ${notificationType} notification:`, err)
+            );
+
+            return finalResult;
         }
 
-        return null;
-    } catch (error) {
-        console.error('[AI] Error generating compatibility explanation:', error);
-        return null;
+        throw new Error("L'AI ha restituito un oggetto non valido (manca explanation).");
+    } catch (error: any) {
+        console.error('[AI] Fatal error in generateCompatibilityExplanation:', error);
+        throw error; // Rethrow to let the UI catch and display the specific message
     }
 };
+
+// Fetch all users who have "spied" on a given profile (generated AI analysis)
+export const getProfileViewers = async (viewedUserId: string): Promise<string[]> => {
+    if (!isSupabaseConfigured) return [];
+    try {
+        const { data, error } = await supabase
+            .from('profile_views')
+            .select('viewer_id')
+            .eq('viewed_id', viewedUserId);
+
+        if (error) {
+            console.warn('[AI] Error fetching profile viewers:', error);
+            return [];
+        }
+
+        return (data || []).map((row: any) => row.viewer_id);
+    } catch (e) {
+        console.warn('[AI] Error in getProfileViewers:', e);
+        return [];
+    }
+};
+

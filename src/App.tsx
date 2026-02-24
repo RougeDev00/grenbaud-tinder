@@ -1,17 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Profile, AppView } from './types';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import type { Profile } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 import Landing from './components/Landing';
 import Registration from './components/Registration';
 import ProfileGrid from './components/ProfileGrid';
 import AIMatch from './components/AIMatch';
+import EventList from './components/Events/EventList';
+import EventDetailsPage from './components/Events/EventDetailsPage';
+import ThreadsFeed from './components/Esplora/ThreadsFeed';
 import ProfileView from './components/ProfileView';
 import Navbar from './components/Navbar';
 import Inbox from './components/Chat/Inbox';
 import ChatWindow from './components/Chat/ChatWindow';
-import { subscribeToMessages, getTotalUnreadCount, markConversationRead } from './services/chatService';
-import logoText from './assets/logo-text-v2.png';
+import OnboardingTutorial from './components/OnboardingTutorial';
+import { markConversationRead, subscribeToMessages, getTotalUnreadCount } from './services/chatService';
+import { getProfile } from './services/profileService';
+import { getTotalEventUnreadCount } from './services/eventService';
+import { supabase } from './lib/supabase';
+import confetti from 'canvas-confetti';
+
 import './index.css';
 import './App.css';
 
@@ -19,20 +28,23 @@ type IntentModal = 'existing_account' | 'no_account' | null;
 
 const AppContent: React.FC = () => {
   const { profile, isAuthenticated, loading, setProfile, signOut, mockLogin, isMockMode } = useAuth();
-  const [currentView, setCurrentView] = useState<AppView>('explore');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [intentModal, setIntentModal] = useState<IntentModal>(null);
   const [intentChecked, setIntentChecked] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState<Profile | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [inboxRefreshTrigger, setInboxRefreshTrigger] = useState(0);
   const [localWarningDismissed, setLocalWarningDismissed] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('baudr_tutorial_completed'));
 
-  // Refresh unread count
+  // Refresh unread count (private + event chats)
   const refreshUnreadCount = useCallback(async () => {
     if (!profile?.twitch_id) return;
-    const count = await getTotalUnreadCount(profile.twitch_id);
-    setUnreadCount(count);
-  }, [profile?.twitch_id]);
+    const chatCount = await getTotalUnreadCount(profile.twitch_id);
+    const eventCount = profile?.id ? await getTotalEventUnreadCount(profile.id) : 0;
+    setUnreadCount(chatCount + eventCount);
+  }, [profile?.twitch_id, profile?.id]);
 
   // Global realtime subscription for unread badge
   useEffect(() => {
@@ -46,22 +58,23 @@ const AppContent: React.FC = () => {
         setUnreadCount(prev => prev + 1);
       }
       refreshUnreadCount();
+      setInboxRefreshTrigger(prev => prev + 1);
     });
 
     // Adaptive Polling
-    // Active: every 3s
+    // Active: every 30s (Realtime subscription handles instant updates)
     const activeInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         refreshUnreadCount();
       }
-    }, 3000);
+    }, 30000);
 
-    // Inactive: every 15s
+    // Inactive: every 2 minutes
     const inactiveInterval = setInterval(() => {
       if (document.visibilityState !== 'visible') {
         refreshUnreadCount();
       }
-    }, 15000);
+    }, 120000);
 
     return () => {
       unsubscribe();
@@ -69,6 +82,66 @@ const AppContent: React.FC = () => {
       clearInterval(inactiveInterval);
     };
   }, [profile?.twitch_id, profile?.is_registered, refreshUnreadCount]);
+
+  // Refresh unread count on route change (so badge is always current)
+  useEffect(() => {
+    refreshUnreadCount();
+  }, [location.pathname, refreshUnreadCount]);
+
+  // Global realtime subscription for matches (Confetti!)
+  useEffect(() => {
+    if (!profile?.id || !profile?.is_registered) return;
+
+    const channel = supabase
+      .channel('public:matches')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'matches' },
+        (payload) => {
+          const match = payload.new;
+          if (match.user_1 === profile.id || match.user_2 === profile.id) {
+            console.log('🎉 IT IS A MATCH!', match);
+
+            // Fire confetti
+            const duration = 3000;
+            const end = Date.now() + duration;
+
+            const frame = () => {
+              confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: ['#a855f7', '#ec4899', '#fcd34d']
+              });
+              confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: ['#a855f7', '#ec4899', '#fcd34d']
+              });
+
+              if (Date.now() < end) {
+                requestAnimationFrame(frame);
+              }
+            };
+            frame();
+
+            // Notify user with a toast or an alert
+            // Simple alert for now as there's no toast system
+            setTimeout(() => {
+              alert('🔥 IT\'S A MATCH! Hai appena fatto match con una persona! Controlla la sezione Inbox.');
+            }, 500);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, profile?.is_registered]);
 
   // Check auth intent after login
   useEffect(() => {
@@ -93,6 +166,29 @@ const AppContent: React.FC = () => {
     localStorage.removeItem('auth_intent');
     setIntentChecked(true);
   }, [isAuthenticated, loading, profile, intentChecked]);
+
+  // Handle deep linking for reciprocal spy notifications (open chat)
+  useEffect(() => {
+    const state = location.state as { openChatId?: string } | null;
+    if (state?.openChatId && profile?.is_registered) {
+      const targetId = state.openChatId;
+
+      const autoOpenChat = async () => {
+        try {
+          const targetProfile = await getProfile(targetId);
+          if (targetProfile) {
+            handleOpenChat(targetProfile);
+            // Clear the state so it doesn't reopen upon re-render
+            navigate(location.pathname, { replace: true, state: {} });
+          }
+        } catch (err) {
+          console.error('[APP] Error auto-opening chat from notification:', err);
+        }
+      };
+
+      autoOpenChat();
+    }
+  }, [location.state, profile?.is_registered]);
 
   // Load discover profiles when authenticated
   // This useEffect is no longer needed as profiles state is removed and ProfileGrid handles its own data loading.
@@ -163,13 +259,13 @@ const AppContent: React.FC = () => {
     };
     console.log('Registration complete, setting profile:', newProfile);
     setProfile(newProfile);
-    setCurrentView('explore');
+    navigate('/');
   };
 
   // Logout
   const handleLogout = async () => {
     await signOut();
-    setCurrentView('explore');
+    navigate('/');
     setIntentChecked(false);
     setActiveChatUser(null);
   };
@@ -363,62 +459,76 @@ const AppContent: React.FC = () => {
   // Main app
   return (
     <div className="app-container">
-      {/* Header */}
-      <header className="app-header">
-        <img
-          src={logoText}
-          alt="Baudr"
-          className="app-logo-img"
-        />
-      </header>
-
+      {/* Onboarding Tutorial */}
+      {showTutorial && (
+        <OnboardingTutorial onComplete={() => setShowTutorial(false)} />
+      )}
       {/* Main Content */}
       <main className="app-main">
         <div className="main-spotlight" />
-        {currentView === 'explore' && (
-          <ProfileGrid currentUser={profile} onOpenChat={handleOpenChat} />
-        )}
-        {currentView === 'aimatch' && (
-          <AIMatch currentUser={profile} onOpenChat={handleOpenChat} />
-        )}
-        {currentView === 'matches' && (
-          <div className="matches-page">
-            <div className="matches-empty">
-              <div className="matches-empty-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-light)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
-              </div>
-              <h3>I tuoi Match</h3>
-              <p>Quando trovi un match apparirà qui!</p>
-              <p className="matches-hint">Continua a swipare per trovare la tua anima gemella nella community</p>
+        <Routes>
+          <Route path="/" element={
+            <ProfileGrid currentUser={profile} onOpenChat={handleOpenChat} />
+          } />
+          <Route path="/aimatch" element={
+            <AIMatch currentUser={profile} onOpenChat={handleOpenChat} />
+          } />
+          <Route path="/threads" element={
+            <ThreadsFeed currentUser={profile} onOpenProfile={(user) => {
+              // Navigate to the user's profile view
+              setActiveChatUser(user);
+              navigate(`/profile?view=${user.id}`);
+            }} />
+          } />
+          <Route path="/events" element={
+            <EventList currentUser={profile} />
+          } />
+          <Route path="/events/:id" element={
+            <EventDetailsPage currentUser={profile} />
+          } />
+          <Route path="/messages" element={
+            <Inbox currentUser={profile} onSelectChat={handleOpenChat} refreshTrigger={inboxRefreshTrigger} onRefreshUnread={refreshUnreadCount} />
+          } />
+          <Route path="/profile" element={
+            <div className="profile-page-wrapper" style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+              {activeChatUser && (
+                <button
+                  className="btn-back"
+                  onClick={() => {
+                    setActiveChatUser(null);
+                    navigate(-1);
+                  }}
+                  style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                >
+                  ← Indietro
+                </button>
+              )}
+              <ProfileView
+                profile={activeChatUser ? activeChatUser : profile}
+                currentUser={profile}
+                readOnly={!!activeChatUser}
+                onLogout={handleLogout}
+                onOpenChat={() => handleOpenChat(activeChatUser!)}
+              />
             </div>
-          </div>
-        )}
-        {currentView === 'profile' && (
-          <div className="profile-page-wrapper" style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-            {activeChatUser && (
-              <button
-                className="btn-back"
-                onClick={() => setCurrentView('chat')}
-                style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-              >
-                ← Torna alla chat
-              </button>
-            )}
-            <ProfileView
-              profile={activeChatUser && currentView === 'profile' ? activeChatUser : profile}
-              currentUser={profile}
-              readOnly={!!activeChatUser}
-              onLogout={handleLogout}
-            />
-          </div>
-        )}
-        {currentView === 'chat' && (
-          <Inbox currentUser={profile} onSelectChat={handleOpenChat} refreshTrigger={inboxRefreshTrigger} />
-        )}
+          } />
+          <Route path="/matches" element={
+            <div className="matches-page">
+              <div className="matches-empty">
+                <div className="matches-empty-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-light)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                </div>
+                <h3>I tuoi Match</h3>
+                <p>Quando trovi un match apparirà qui!</p>
+                <p className="matches-hint">Continua a swipare per trovare la tua anima gemella nella community</p>
+              </div>
+            </div>
+          } />
+        </Routes>
       </main>
 
       {/* Global Chat Overlay */}
-      {activeChatUser && currentView !== 'profile' && (
+      {activeChatUser && location.pathname !== '/profile' && (
         <ChatWindow
           currentUser={{ ...profile, id: profile.id }}
           otherUser={activeChatUser}
@@ -428,13 +538,13 @@ const AppContent: React.FC = () => {
             setInboxRefreshTrigger(prev => prev + 1); // Force Inbox reload
           }}
           onNewMessage={refreshUnreadCount}
-          onOpenProfile={() => setCurrentView('profile')}
+          onOpenProfile={() => navigate('/profile')}
         />
       )}
 
       {/* Bottom navbar */}
-      <Navbar currentView={currentView} onNavigate={setCurrentView} unreadCount={unreadCount} />
-      <div style={{ position: 'fixed', bottom: '80px', right: '10px', fontSize: '10px', opacity: 0.8, zIndex: 9999, pointerEvents: 'none', textShadow: '0 1px 2px black' }}>v0.2.3-fix</div>
+      <Navbar unreadCount={unreadCount} />
+      <div style={{ position: 'fixed', bottom: '80px', right: '10px', fontSize: '10px', opacity: 0.8, zIndex: 9999, pointerEvents: 'none', textShadow: '0 1px 2px black' }}>v0.3.2</div>
     </div>
   );
 };

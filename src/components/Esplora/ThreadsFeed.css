@@ -1,0 +1,901 @@
+/* ═══════════════════════════════════════════════════
+   ✨ Esplora Feed — Premium Post Cards
+   ═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ── Feed Container ── */
+.threads-feed-container {
+    background: #050508;
+    /* Darker background to make cards pop */
+    min-height: 100vh;
+}
+
+.threads-feed {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding-bottom: 120px;
+    max-width: 680px;
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+    padding-top: 20px;
+}
+
+/* ── Feed Header ── */
+.threads-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(5, 5, 8, 0.85);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    margin-bottom: 24px;
+}
+
+.threads-header h1 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ffffff 30%, #a855f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+    letter-spacing: -0.5px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.threads-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.threads-header-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.35);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+
+.threads-header-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a855f7;
+    flex-shrink: 0;
+    animation: dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(0.85);
+        box-shadow: 0 0 0 4px rgba(168, 85, 247, 0);
+    }
+}
+
+.btn-new-post {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 14px;
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(168, 85, 247, 0.1));
+    color: #e0e0ff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15), inset 0 0 10px rgba(168, 85, 247, 0.1);
+    font-family: 'Outfit', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-new-post::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+}
+
+.btn-new-post:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.3), inset 0 0 15px rgba(168, 85, 247, 0.2);
+    border-color: rgba(168, 85, 247, 0.6);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(168, 85, 247, 0.2));
+    color: #ffffff;
+}
+
+.btn-new-post:hover::after {
+    transform: translateX(100%);
+}
+
+/* ── Ultra Premium Post Card ── */
+.thread-post-wrapper {
+    position: relative;
+    margin: 12px 16px 24px;
+}
+
+/* Highlight animation when navigating from a notification */
+@keyframes postHighlight {
+    0% {
+        box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+        border-radius: 20px;
+    }
+
+    30% {
+        box-shadow: 0 0 0 6px rgba(251, 146, 60, 0.55);
+        border-radius: 20px;
+    }
+
+    70% {
+        box-shadow: 0 0 0 6px rgba(251, 146, 60, 0.3);
+        border-radius: 20px;
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+        border-radius: 20px;
+    }
+}
+
+.post-highlight {
+    animation: postHighlight 2.5s ease-out forwards;
+}
+
+/* Ambient glow blur behind the card */
+.thread-post-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(59, 130, 246, 0.05), rgba(236, 72, 153, 0.1));
+    filter: blur(20px);
+    border-radius: 24px;
+    z-index: 0;
+    opacity: 0.6;
+    transition: opacity 0.4s;
+    pointer-events: none;
+}
+
+.thread-post-wrapper:hover::before {
+    opacity: 1;
+}
+
+.thread-post {
+    position: relative;
+    z-index: 1;
+    padding: 24px;
+    background: rgba(12, 12, 18, 0.7);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.02);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s, border-color 0.4s;
+    overflow: hidden;
+}
+
+/* Glass edge highlight on top */
+.thread-post::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    z-index: 2;
+}
+
+/* Subtle corner radial gradient */
+.thread-post::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle at 0% 0%, rgba(168, 85, 247, 0.08), transparent 70%);
+    pointer-events: none;
+}
+
+.thread-post:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 30px 60px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(168, 85, 247, 0.05),
+        inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+/* ── Post Header ── */
+.thread-post-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.thread-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid transparent;
+    background-image: linear-gradient(135deg, #161622, #161622), linear-gradient(135deg, #a855f7, #ec4899);
+    background-origin: border-box;
+    background-clip: content-box, border-box;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+    position: relative;
+    z-index: 2;
+}
+
+.thread-avatar:hover {
+    transform: scale(1.08) rotate(2deg);
+    box-shadow: 0 6px 15px rgba(168, 85, 247, 0.3);
+}
+
+.thread-avatar-placeholder {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.thread-post-meta {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+.thread-username {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: #ffffff;
+    cursor: pointer;
+    transition: color 0.2s;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.2px;
+}
+
+.thread-username:hover {
+    color: #a855f7;
+}
+
+.thread-time {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 2px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.thread-twitch-handle {
+    font-size: 0.72rem;
+    color: rgba(168, 85, 247, 0.6);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    margin-top: 1px;
+}
+
+.thread-delete-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    font-size: 0.8rem;
+}
+
+.thread-delete-btn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.15);
+}
+
+/* ── Post Content ── */
+.thread-post-content {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: #f0f0f5;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.1px;
+}
+
+.thread-post-image {
+    width: 100%;
+    max-height: 500px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.thread-post-image:hover {
+    transform: scale(1.015);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+/* ── Actions Bar ── */
+.thread-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.thread-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-family: 'Outfit', sans-serif;
+}
+
+.thread-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.thread-action-btn.liked {
+    color: #ec4899;
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(236, 72, 153, 0.02));
+    border-color: rgba(236, 72, 153, 0.2);
+    box-shadow: 0 2px 10px rgba(236, 72, 153, 0.1);
+}
+
+.thread-action-btn.liked:hover {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05));
+    border-color: rgba(236, 72, 153, 0.3);
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.2);
+}
+
+/* ── Comments Section ── */
+.thread-comments {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.thread-comment {
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.015);
+    border-radius: 12px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.2s;
+}
+
+.thread-comment:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.thread-comment-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.thread-comment-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.thread-comment-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.thread-comment-name {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #d0d0d8;
+    font-family: 'Outfit', sans-serif;
+}
+
+.thread-comment-time {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.thread-comment-text {
+    font-size: 0.88rem;
+    color: #c0c0c8;
+    margin-top: 3px;
+    line-height: 1.45;
+    word-break: break-word;
+    font-family: 'Outfit', sans-serif;
+}
+
+.thread-comment-delete {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: auto;
+    transition: color 0.2s;
+}
+
+.thread-comment-delete:hover {
+    color: #ef4444;
+}
+
+/* ── Reply Button ── */
+.thread-reply-btn {
+    background: none;
+    border: none;
+    color: rgba(168, 85, 247, 0.6);
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    padding: 2px 0;
+    margin-top: 4px;
+    transition: color 0.2s ease;
+    letter-spacing: 0.02em;
+}
+
+.thread-reply-btn:hover {
+    color: rgba(168, 85, 247, 1);
+}
+
+/* ── Reply Input ── */
+.thread-reply-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    margin-left: 4px;
+}
+
+.thread-reply-input {
+    font-size: 0.82rem !important;
+    padding: 6px 10px !important;
+    background: rgba(124, 58, 237, 0.08) !important;
+    border-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+/* ── Nested Replies ── */
+.thread-replies {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 8px;
+    border-left: 2px solid rgba(168, 85, 247, 0.2);
+    margin-left: 4px;
+}
+
+.thread-reply {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.thread-reply-arrow {
+    font-size: 0.75rem;
+    color: rgba(168, 85, 247, 0.5);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.thread-reply-avatar {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+}
+
+/* ── Comment Input ── */
+.thread-comment-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.thread-comment-input {
+    flex: 1;
+    padding: 9px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    color: #e0e0e8;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    font-family: 'Outfit', sans-serif;
+}
+
+.thread-comment-input:focus {
+    border-color: rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.05);
+}
+
+.thread-comment-input::placeholder {
+    color: rgba(255, 255, 255, 0.18);
+}
+
+.thread-comment-send {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s, opacity 0.2s;
+    box-shadow: 0 2px 10px rgba(168, 85, 247, 0.2);
+}
+
+.thread-comment-send:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+.thread-comment-send:not(:disabled):hover {
+    transform: scale(1.08);
+}
+
+/* ── Create Post Modal ── */
+.create-post-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 10000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 60px;
+    animation: fadeIn 0.2s ease;
+}
+
+.create-post-modal {
+    background: rgba(18, 18, 28, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 520px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(168, 85, 247, 0.05);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.create-post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.create-post-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f0f0f5;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+.create-post-close {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.create-post-close:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.create-post-body {
+    padding: 20px 22px;
+}
+
+.create-post-textarea {
+    width: 100%;
+    min-height: 130px;
+    border: none;
+    background: transparent;
+    color: #e0e0e8;
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    font-family: 'Outfit', sans-serif;
+}
+
+.create-post-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.18);
+}
+
+.create-post-image-preview {
+    position: relative;
+    margin-top: 14px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.create-post-image-preview img {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+}
+
+.create-post-remove-image {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    backdrop-filter: blur(8px);
+    transition: background 0.2s;
+}
+
+.create-post-remove-image:hover {
+    background: rgba(239, 68, 68, 0.5);
+}
+
+.create-post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.create-post-attach {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.create-post-attach:hover {
+    color: #a855f7;
+    background: rgba(168, 85, 247, 0.08);
+    border-color: rgba(168, 85, 247, 0.15);
+}
+
+.create-post-submit {
+    padding: 10px 26px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 3px 16px rgba(168, 85, 247, 0.25);
+    font-family: 'Outfit', sans-serif;
+}
+
+.create-post-submit:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.create-post-submit:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(168, 85, 247, 0.4);
+}
+
+/* ── Empty State ── */
+.threads-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    text-align: center;
+}
+
+.threads-empty-icon {
+    font-size: 3.2rem;
+    margin-bottom: 18px;
+    opacity: 0.5;
+}
+
+.threads-empty h3 {
+    font-size: 1.15rem;
+    color: #d0d0d8;
+    margin: 0 0 8px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.threads-empty p {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ── Image Lightbox ── */
+.thread-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    animation: fadeIn 0.15s ease;
+}
+
+.thread-lightbox img {
+    max-width: 92%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Loading Skeleton ── */
+.thread-skeleton {
+    margin: 6px 14px;
+    padding: 18px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.thread-skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.thread-skeleton-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    animation: pulse 1.5s ease infinite;
+}
+
+.thread-skeleton-name {
+    width: 130px;
+    height: 14px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.05);
+    animation: pulse 1.5s ease infinite;
+}
+
+.thread-skeleton-body {
+    height: 65px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    animation: pulse 1.5s ease infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+}
