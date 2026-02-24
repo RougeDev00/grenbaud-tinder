@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Landing from './components/Landing';
 import Registration from './components/Registration';
 import ProfileGrid from './components/ProfileGrid';
-import AIMatch from './components/AIMatch';
+
 import EventList from './components/Events/EventList';
 import EventDetailsPage from './components/Events/EventDetailsPage';
 import ThreadsFeed from './components/Esplora/ThreadsFeed';
@@ -469,9 +469,6 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={
             <ProfileGrid currentUser={profile} onOpenChat={handleOpenChat} />
-          } />
-          <Route path="/aimatch" element={
-            <AIMatch currentUser={profile} onOpenChat={handleOpenChat} />
           } />
           <Route path="/threads" element={
             <ThreadsFeed currentUser={profile} onOpenProfile={(user) => {
