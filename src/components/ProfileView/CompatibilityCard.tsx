@@ -76,21 +76,7 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
         setIsExplanationLoading(false);
     };
 
-    const handleForceRegenerateCompatibility = async () => {
-        if (!matchScore || isExplanationLoading) return;
-        setIsExplanationLoading(true);
 
-        // Forcing regeneration through the AI prompt (the backend function handles it currently)
-        const result = await generateCompatibilityExplanation(currentUser, profile, matchScore);
-        if (result) {
-            setMatchScore(result.score);
-            setCompatibilityExplanation(result.explanation);
-            setIsEstimated(false);
-        } else {
-            alert("Errore durante la rigenerazione. Riprova più tardi.");
-        }
-        setIsExplanationLoading(false);
-    };
 
 
 
@@ -149,16 +135,6 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
                                 return part;
                             })}
                         </p>
-                        <div style={{ textAlign: 'center', marginTop: '12px' }}>
-                            <button
-                                className="btn-regenerate-ai"
-                                style={{ margin: '0 auto', cursor: 'pointer', zIndex: 10, position: 'relative', fontSize: '0.8rem', padding: '6px 16px', opacity: 0.8 }}
-                                onClick={handleForceRegenerateCompatibility}
-                                disabled={isExplanationLoading}
-                            >
-                                🔄 Rigenera Analisi
-                            </button>
-                        </div>
                     </>
                 ) : (
                     <div className="compatibility-empty-state">
@@ -201,6 +177,6 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };

@@ -33,7 +33,7 @@ const GENDER_CODE_TO_LABEL: Record<string, string> = {
 };
 
 const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
-    const { user, session, profile, isMockMode, signOut } = useAuth();
+    const { user, session, profile, isMockMode } = useAuth();
     const [step, setStep] = useState(1);
     const totalSteps = 7;
     const [saving, setSaving] = useState(false);
@@ -390,6 +390,8 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
 
                     console.log('[SAVE] Success:', savedProfile);
                     setSaving(false);
+                    // Reset tutorial flag so newly registered users see the tutorial
+                    localStorage.removeItem('baudr_tutorial_completed');
                     onComplete(savedProfile);
 
                 } catch (err: any) {
@@ -897,80 +899,9 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
                 )}
             </div>
 
-            {/* Troubleshooting Actions */}
-            <div className="reg-footer-actions" style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center', opacity: 0.7 }}>
-                <button
-                    onClick={() => signOut()}
-                    className="btn-text"
-                    style={{ color: '#ff4444', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                    Esci
-                </button>
-                <button
-                    onClick={async () => {
-                        if (!confirm('Sei sicuro? Questo cancellerà tutti i dati inseriti e ti farà ricominciare da zero.')) return;
-
-                        // Hard reset via raw fetch
-                        if (user && session) {
-                            try {
-                                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-                                const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-                                await fetch(`${supabaseUrl}/rest/v1/profiles?twitch_id=eq.${user.id}`, {
-                                    method: 'PATCH',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'apikey': supabaseKey,
-                                        'Authorization': `Bearer ${session.access_token}`,
-                                    },
-                                    body: JSON.stringify({
-                                        is_registered: false,
-                                        photo_1: '', photo_2: '', photo_3: '',
-                                        bio: '', hobbies: '', music: '', youtube: '',
-                                        twitch_watches: '', zodiac_sign: '', grenbaud_is: '', instagram: '',
-                                        display_name: '' // Clear everything
-                                    }),
-                                });
-                                window.location.reload();
-                            } catch (e) { console.error(e); alert('Errore nel reset. Riprova.'); }
-                        }
-                    }}
-                    className="btn-text"
-                    style={{ color: '#ff4444', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                    Resetta Account
-                </button>
-                <button
-                    onClick={async () => {
-                        if (user && session) {
-                            try {
-                                console.log('[TEST DB] Fetching...');
-                                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-                                const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-                                const res = await fetch(`${supabaseUrl}/rest/v1/profiles?select=*&limit=5`, {
-                                    headers: {
-                                        'apikey': supabaseKey,
-                                        'Authorization': `Bearer ${session.access_token}`,
-                                    },
-                                });
-                                const text = await res.text();
-                                console.log('[TEST DB] Status:', res.status, text);
-                                if (res.ok) {
-                                    const data = JSON.parse(text);
-                                    alert(`Trovati ${data.length} profili (incluso te).\nControlla la console per i dettagli.`);
-                                } else {
-                                    alert(`Errore ${res.status}: ${text}`);
-                                }
-                            } catch (e) { console.error(e); alert('Errore test DB'); }
-                        }
-                    }}
-                    className="btn-text"
-                    style={{ color: '#888', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', marginLeft: '10px' }}
-                >
-                    Test DB
-                </button>
-            </div>
 
             {/* Hidden file input for photo uploads */}
+
             <input
                 ref={fileInputRef}
                 type="file"
