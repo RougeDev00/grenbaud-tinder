@@ -16,6 +16,7 @@ import Navbar from './components/Navbar';
 import Inbox from './components/Chat/Inbox';
 import ChatWindow from './components/Chat/ChatWindow';
 import OnboardingTutorial from './components/OnboardingTutorial';
+import UpdateModal, { useUpdateModal } from './components/UpdateModal';
 import { markConversationRead, subscribeToMessages, getTotalUnreadCount } from './services/chatService';
 import { getProfile } from './services/profileService';
 import { getTotalEventUnreadCount } from './services/eventService';
@@ -34,6 +35,7 @@ const AppContent: React.FC = () => {
   const [intentModal, setIntentModal] = useState<IntentModal>(null);
   const [intentChecked, setIntentChecked] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState<Profile | null>(null);
+  const { showUpdate, handleClose: handleCloseUpdate } = useUpdateModal();
 
   // Twitch sub check state (for new users only)
   const [subCheckStatus, setSubCheckStatus] = useState<'idle' | 'checking' | 'subscribed' | 'not_subscribed'>('idle');
@@ -560,6 +562,8 @@ const AppContent: React.FC = () => {
   // Main app
   return (
     <div className="app-container">
+      {/* Update Modal */}
+      {showUpdate && <UpdateModal onClose={handleCloseUpdate} />}
       {/* Onboarding Tutorial */}
       {showTutorial && (
         <OnboardingTutorial onComplete={() => setShowTutorial(false)} />
@@ -642,7 +646,6 @@ const AppContent: React.FC = () => {
 
       {/* Bottom navbar */}
       <Navbar unreadCount={unreadCount} />
-      <div style={{ position: 'fixed', bottom: '80px', right: '10px', fontSize: '10px', opacity: 0.8, zIndex: 9999, pointerEvents: 'none', textShadow: '0 1px 2px black' }}>v0.5.1</div>
     </div>
   );
 };

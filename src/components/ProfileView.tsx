@@ -264,6 +264,11 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
     React.useEffect(() => {
         const fetchUnlockStatus = async () => {
             if (!currentUser?.id || !profile?.id || currentUser.id === profile.id) return;
+            // Admin (grenbaud) always has chat unlocked
+            if (currentUser.twitch_username?.toLowerCase() === 'grenbaud') {
+                setIsChatUnlocked(true);
+                return;
+            }
             const unlocked = await checkMutualAnalysis(currentUser.id, profile.id);
             setIsChatUnlocked(unlocked);
         };

@@ -178,8 +178,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
 
     const badgeStyle = matchScore !== null ? getBadgeStyle(matchScore, isEstimated) : null;
 
+    const isGold = profile.twitch_username?.toLowerCase() === 'grenbaud';
+
     return (
-        <div className={`profile-card ${isCenterHovered ? 'is-center-hovered' : ''}`} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+        <div className={`profile-card ${isCenterHovered ? 'is-center-hovered' : ''} ${isGold ? 'profile-card--gold' : ''}`} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
             <div className="profile-card-photos" onClick={handlePhotoTap}>
                 {photos.length > 1 && (
                     <div className="photo-dots">
@@ -239,6 +241,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
 
                     {/* Badges: Gender & Looking For */}
                     <div className="profile-card-badges">
+                        {isGold && (
+                            <span className="card-badge card-badge--gold" title="CEO of BAUDR">
+                                👑 GOLD
+                            </span>
+                        )}
                         {profile.gender && (
                             <span className={`card-badge card-badge--gender`}>
                                 {profile.gender === 'Maschio' ? '♂' : profile.gender === 'Femmina' ? '♀' : '⚧'} {profile.gender}

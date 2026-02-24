@@ -1,15 +1,18 @@
 import React, { useState, useCallback } from 'react';
 import type { EsploraPostWithProfile, EsploraCommentWithProfile } from '../../types';
-import { toggleEsploraLike, getPostComments, createComment, deleteComment } from '../../services/esploraService';
+import { toggleEsploraLike, getPostComments, createComment, deleteComment, togglePinPost } from '../../services/esploraService';
 
 interface ThreadPostProps {
     post: EsploraPostWithProfile;
     currentUserId: string;
+    currentUsername?: string;
+    isAdmin?: boolean;
     onLike: () => void;
     onDelete: () => void;
     onImageClick: (url: string) => void;
     onProfileClick: (userId: string) => void;
 }
+
 
 const formatTimeAgo = (dateStr: string): string => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -23,7 +26,7 @@ const formatTimeAgo = (dateStr: string): string => {
     return new Date(dateStr).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 };
 
-const ThreadPost: React.FC<ThreadPostProps> = ({ post, currentUserId, onLike, onDelete, onImageClick, onProfileClick }) => {
+const ThreadPost: React.FC<ThreadPostProps> = ({ post, currentUserId, currentUsername, isAdmin = false, onLike, onDelete, onImageClick, onProfileClick }) => {
     const [liked, setLiked] = useState(post.hasLiked || false);
     const [likesCount, setLikesCount] = useState(post.likes_count);
     const [showComments, setShowComments] = useState(false);
@@ -36,9 +39,11 @@ const ThreadPost: React.FC<ThreadPostProps> = ({ post, currentUserId, onLike, on
     const [replyText, setReplyText] = useState('');
 
     const isOwner = post.user_id === currentUserId;
+    const canDelete = isOwner || isAdmin;
     const avatar = post.profile?.photo_1;
     const displayName = post.profile?.display_name || post.profile?.twitch_username || 'Utente';
     const twitchUsername = post.profile?.twitch_username;
+    const isGold = twitchUsername?.toLowerCase() === 'grenbaud';
 
     const handleLike = async () => {
         const newLiked = !liked;
@@ -49,30 +54,40 @@ const ThreadPost: React.FC<ThreadPostProps> = ({ post, currentUserId, onLike, on
     };
 
     const handleToggleComments = useCallback(async () => {
-        if (!showComments) {
-            setShowComments(true);
-            setLoadingComments(true);
+        if (showComments) {
+            setShowComments(false);
+            return;
+        }
+        setLoadingComments(true);
+        setShowComments(true);
+        try {
             const data = await getPostComments(post.id);
             setComments(data);
+        } catch (err) {
+            console.error('Error loading comments:', err);
+        } finally {
             setLoadingComments(false);
-        } else {
-            setShowComments(false);
         }
     }, [showComments, post.id]);
 
-    const handleSubmitComment = async () => {
-        const text = commentText.trim();
+    const handleSubmitComment = useCallback(async () => {
+        const text = (commentText || '').trim();
         if (!text || submittingComment) return;
         setSubmittingComment(true);
-        const ok = await createComment(post.id, currentUserId, text, null);
-        if (ok) {
-            setCommentText('');
-            setCommentsCount(prev => prev + 1);
-            const refreshed = await getPostComments(post.id);
-            setComments(refreshed);
+        try {
+            const ok = await createComment(post.id, currentUserId, text, null);
+            if (ok) {
+                setCommentText('');
+                setCommentsCount(prev => prev + 1);
+                const refreshed = await getPostComments(post.id);
+                setComments(refreshed);
+            }
+        } catch (err) {
+            console.error('Error creating comment:', err);
+        } finally {
+            setSubmittingComment(false);
         }
-        setSubmittingComment(false);
-    };
+    }, [commentText, submittingComment, post.id, currentUserId]);
 
     const handleSubmitReply = async () => {
         const text = replyText.trim();
@@ -90,11 +105,17 @@ const ThreadPost: React.FC<ThreadPostProps> = ({ post, currentUserId, onLike, on
     };
 
     const handleDeleteComment = async (commentId: string) => {
-        const success = await deleteComment(commentId, currentUserId);
+        const success = await deleteComment(commentId, currentUserId, isAdmin);
         if (success) {
             setComments(prev => prev.filter(c => c.id !== commentId));
             setCommentsCount(prev => Math.max(0, prev - 1));
         }
+    };
+
+    const handleTogglePin = async () => {
+        const newPinned = !post.is_pinned;
+        const success = await togglePinPost(post.id, newPinned, currentUsername || '');
+        if (success) onLike(); // refresh posts
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -106,36 +127,55 @@ const ThreadPost: React.FC<ThreadPostProps> = ({ post, currentUserId, onLike, on
 
     return (
         <div className="thread-post-wrapper">
-            <article className="thread-post">
+            <article className={`thread-post ${isGold ? 'thread-post--gold' : ''} ${post.is_pinned ? 'thread-post--pinned' : ''}`}>
+                {/* Pinned Banner */}
+                {post.is_pinned && (
+                    <div className="thread-pinned-banner">
+                        <span className="thread-pinned-icon">📌</span>
+                        <span className="thread-pinned-label">Post Fissato</span>
+                    </div>
+                )}
                 {/* Header */}
                 <div className="thread-post-header">
                     {avatar ? (
                         <img
-                            className="thread-avatar"
+                            className={`thread-avatar ${isGold ? 'thread-avatar--gold' : ''}`}
                             src={avatar}
                             alt={displayName}
                             onClick={() => onProfileClick(post.user_id)}
                         />
                     ) : (
-                        <div className="thread-avatar-placeholder" onClick={() => onProfileClick(post.user_id)}>
+                        <div className={`thread-avatar-placeholder ${isGold ? 'thread-avatar--gold' : ''}`} onClick={() => onProfileClick(post.user_id)}>
                             {displayName.charAt(0).toUpperCase()}
                         </div>
                     )}
                     <div className="thread-post-meta">
                         <span className="thread-username" onClick={() => onProfileClick(post.user_id)}>
                             {displayName}
+                            {isGold && <span className="thread-gold-badge" title="CEO of BAUDR">👑</span>}
                         </span>
                         {twitchUsername && (
                             <span className="thread-twitch-handle">@{twitchUsername}</span>
                         )}
                         <span className="thread-time">{formatTimeAgo(post.created_at)}</span>
                     </div>
-                    {isOwner && (
-                        <button className="thread-delete-btn" onClick={onDelete} title="Elimina post">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                        </button>
+                    {canDelete && (
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            {isAdmin && (
+                                <button
+                                    className={`thread-pin-btn ${post.is_pinned ? 'pinned' : ''}`}
+                                    onClick={handleTogglePin}
+                                    title={post.is_pinned ? 'Rimuovi pin' : 'Pinna post'}
+                                >
+                                    📌
+                                </button>
+                            )}
+                            <button className="thread-delete-btn" onClick={onDelete} title="Elimina post">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                            </button>
+                        </div>
                     )}
                 </div>
 
@@ -157,12 +197,26 @@ const ThreadPost: React.FC<ThreadPostProps> = ({ post, currentUserId, onLike, on
 
                 {/* Actions */}
                 <div className="thread-actions">
-                    <button className={`thread-action-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                        {likesCount > 0 && <span>{likesCount}</span>}
-                    </button>
+                    <div className="thread-like-wrapper">
+                        <button className={`thread-action-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                            {likesCount > 0 && <span>{likesCount}</span>}
+                        </button>
+                        {/* Likers tooltip — appears on hover */}
+                        {post.likers && post.likers.length > 0 && (
+                            <div className="thread-likers-tooltip">
+                                <div className="thread-likers-title">Piaciuto a</div>
+                                {post.likers.map((liker, i) => (
+                                    <div key={liker.id || i} className="thread-liker-row">
+                                        {liker.photo_1 && <img src={liker.photo_1} alt="" className="thread-liker-avatar" />}
+                                        <span className="thread-liker-name">{liker.twitch_username}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     <button className="thread-action-btn" onClick={handleToggleComments}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -197,7 +251,7 @@ const ThreadPost: React.FC<ThreadPostProps> = ({ post, currentUserId, onLike, on
                                                     <span className="thread-twitch-handle" style={{ fontSize: '0.65rem', marginLeft: 2 }}>@{comment.profile.twitch_username}</span>
                                                 )}
                                                 <span className="thread-comment-time">{formatTimeAgo(comment.created_at)}</span>
-                                                {comment.user_id === currentUserId && (
+                                                {(comment.user_id === currentUserId || isAdmin) && (
                                                     <button className="thread-comment-delete" onClick={() => handleDeleteComment(comment.id)} title="Elimina">×</button>
                                                 )}
                                             </div>

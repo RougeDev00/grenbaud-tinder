@@ -126,6 +126,7 @@ export interface EsploraPost {
   color_theme: string;
   pos_x?: number;
   pos_y?: number;
+  is_pinned?: boolean;
   created_at: string;
 }
 

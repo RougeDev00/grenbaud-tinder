@@ -70,12 +70,19 @@ const Navbar: React.FC<NavbarProps> = ({ unreadCount = 0 }) => {
         <>
             {/* Top header bar with logo */}
             <header className="navbar-header">
-                <img
-                    src="/baudr-logo.png"
-                    alt="Baudr"
-                    className="navbar-logo"
-                    onClick={() => navigate('/')}
-                />
+                <div className="navbar-header-left">
+                    <span className="navbar-version-badge">v0.7.1</span>
+                    <span className="navbar-version-beta">beta</span>
+                </div>
+                <div className="navbar-header-center">
+                    <img
+                        src="/baudr-logo.png"
+                        alt="Baudr"
+                        className="navbar-logo"
+                        onClick={() => navigate('/')}
+                    />
+                    <span className="navbar-tagline">Community di GrenBaud</span>
+                </div>
                 <div className="navbar-header-right">
                     <NotificationBell />
                 </div>

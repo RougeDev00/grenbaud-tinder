@@ -249,71 +249,56 @@ export const toggleEsploraLike = async (
     posY?: number
 ): Promise<boolean | null> => {
     try {
-        // First check if already liked
-        const { data: existingLike } = await supabase
-            .from('esplora_likes')
-            .select('post_id')
-            .eq('post_id', postId)
-            .eq('user_id', userId)
-            .single();
+        // Use atomic RPC for toggle + count update (SECURITY DEFINER, bypasses RLS)
+        const { data: isNowLiked, error: rpcError } = await supabase
+            .rpc('toggle_esplora_like', { p_post_id: postId, p_user_id: userId });
 
-        if (existingLike) {
-            // Unliking (removing pin)
-            await supabase.from('esplora_likes').delete().eq('post_id', postId).eq('user_id', userId);
+        if (rpcError) {
+            console.error('Error in toggle_esplora_like RPC:', rpcError);
+            return null;
+        }
 
-            // Decrement count
-            const { data: post } = await supabase.from('esplora_posts').select('likes_count').eq('id', postId).single();
-            if (post) {
-                await supabase.from('esplora_posts').update({ likes_count: Math.max(0, post.likes_count - 1) }).eq('id', postId);
+        // If we just liked, update pin position and send notification
+        if (isNowLiked) {
+            // Update pin coordinates if provided
+            if (posX !== undefined || posY !== undefined) {
+                await supabase.from('esplora_likes')
+                    .update({ pos_x: posX ?? 50, pos_y: posY ?? 90 })
+                    .eq('post_id', postId)
+                    .eq('user_id', userId);
             }
-            return false;
-        } else {
-            // Liking (placing pin)
-            await supabase.from('esplora_likes').insert([{
-                post_id: postId,
-                user_id: userId,
-                pos_x: posX ?? 50,
-                pos_y: posY ?? 90
-            }]);
 
-            // Increment count
-            const { data: post } = await supabase.from('esplora_posts').select('likes_count, user_id').eq('id', postId).single();
-            if (post) {
-                await supabase.from('esplora_posts').update({ likes_count: post.likes_count + 1 }).eq('id', postId);
-
-                // Send notification to post owner (don't notify self, only send once per user per post)
-                if (post.user_id && post.user_id !== userId) {
-                    const { createNotification } = await import('./notificationService');
-                    const { supabase: sb } = await import('../lib/supabase');
-                    // Check if we already sent a like notification for this post from this user
-                    const { count } = await sb
-                        .from('notifications')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('user_id', post.user_id)
-                        .eq('actor_id', userId)
-                        .eq('type', 'ESPLORA_LIKE')
-                        .eq('reference_id', postId);
-                    if (!count || count === 0) {
-                        await createNotification(post.user_id, 'ESPLORA_LIKE', userId, postId);
-                    }
+            // Send notification to post owner
+            const { data: post } = await supabase.from('esplora_posts').select('user_id').eq('id', postId).single();
+            if (post?.user_id && post.user_id !== userId) {
+                const { createNotification } = await import('./notificationService');
+                const { supabase: sb } = await import('../lib/supabase');
+                const { count } = await sb
+                    .from('notifications')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', post.user_id)
+                    .eq('actor_id', userId)
+                    .eq('type', 'ESPLORA_LIKE')
+                    .eq('reference_id', postId);
+                if (!count || count === 0) {
+                    await createNotification(post.user_id, 'ESPLORA_LIKE', userId, postId);
                 }
             }
-            return true;
         }
+
+        return isNowLiked;
     } catch (err) {
         console.error('Exception in toggleEsploraLike:', err);
         return null;
     }
 };
 
-export const deleteEsploraPost = async (postId: string, userId: string): Promise<boolean> => {
+export const deleteEsploraPost = async (postId: string, userId: string, isAdmin = false): Promise<boolean> => {
     try {
-        const { error } = await supabase
-            .from('esplora_posts')
-            .delete()
-            .eq('id', postId)
-            .eq('user_id', userId); // Extra safety check, though RLS handles it
+        let query = supabase.from('esplora_posts').delete().eq('id', postId);
+        if (!isAdmin) query = query.eq('user_id', userId);
 
+        const { error } = await query;
         if (error) {
             console.error('Error deleting esplora post:', error);
             return false;
@@ -321,6 +306,28 @@ export const deleteEsploraPost = async (postId: string, userId: string): Promise
         return true;
     } catch (err) {
         console.error('Exception in deleteEsploraPost:', err);
+        return false;
+    }
+};
+
+/**
+ * Toggle pin status on a post (admin only).
+ */
+export const togglePinPost = async (postId: string, pinned: boolean, username?: string): Promise<boolean> => {
+    try {
+        const { data, error } = await supabase
+            .rpc('admin_toggle_pin', {
+                p_post_id: postId,
+                p_pinned: pinned,
+                p_username: username || ''
+            });
+        if (error) {
+            console.error('Error toggling pin:', error);
+            return false;
+        }
+        return !!data;
+    } catch (err) {
+        console.error('Exception in togglePinPost:', err);
         return false;
     }
 };
@@ -415,13 +422,12 @@ export const createComment = async (
 /**
  * Deletes a comment.
  */
-export const deleteComment = async (commentId: string, userId: string): Promise<boolean> => {
+export const deleteComment = async (commentId: string, userId: string, isAdmin = false): Promise<boolean> => {
     try {
-        const { error } = await supabase
-            .from('esplora_comments')
-            .delete()
-            .eq('id', commentId)
-            .eq('user_id', userId);
+        let query = supabase.from('esplora_comments').delete().eq('id', commentId);
+        if (!isAdmin) query = query.eq('user_id', userId);
+
+        const { error } = await query;
 
         if (error) {
             console.error('Error deleting comment:', error);

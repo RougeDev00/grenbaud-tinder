@@ -97,8 +97,10 @@ const EsploraFeed: React.FC<EsploraFeedProps> = ({ currentUser, onOpenProfile })
         await fetchPosts();
     };
 
+    const isAdmin = currentUser.twitch_username?.toLowerCase() === 'grenbaud';
+
     const handleDelete = async (postId: string) => {
-        const ok = await deleteEsploraPost(postId, currentUser.id);
+        const ok = await deleteEsploraPost(postId, currentUser.id, isAdmin);
         if (ok) setPosts(prev => prev.filter(p => p.id !== postId));
     };
 

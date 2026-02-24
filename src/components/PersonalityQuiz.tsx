@@ -108,21 +108,7 @@ const PersonalityQuiz: React.FC<Props> = ({ onComplete, onSkip, isSaving }) => {
         setShowResult(true);
     };
 
-    const handleDemoFill = () => {
-        const demoAnswers: Record<number, number> = {};
-        // Random bias to create realistic strong profiles (not just 50%)
 
-        PERSONALITY_QUESTIONS.forEach(q => {
-            // Skew answers towards one pole or the other randomly per dimension
-            const dimBias = Math.random() > 0.5 ? 1 : -1;
-            const base = 4 + (dimBias * (Math.floor(Math.random() * 3) + 1));
-            // Clamp 1-7
-            const val = Math.max(1, Math.min(7, base));
-            demoAnswers[q.id] = val;
-        });
-        setAnswers(demoAnswers);
-        calculateResult(demoAnswers);
-    };
 
     if (showResult) {
         // Strip -A/-T for description lookup if needed, but we used full keys in data? 
@@ -188,10 +174,6 @@ const PersonalityQuiz: React.FC<Props> = ({ onComplete, onSkip, isSaving }) => {
             <div className="quiz-header sticky-header">
                 <div className="quiz-progress-row">
                     <span className="quiz-progress-text">{progress}% Completato</span>
-                    {/* Demo Button for testing */}
-                    <button onClick={handleDemoFill} className="btn-demo">
-                        ⚡ Demo
-                    </button>
                     <span className="quiz-counter">{currentIndex + 1} / {PERSONALITY_QUESTIONS.length}</span>
                 </div>
                 <div className="progress-bar">

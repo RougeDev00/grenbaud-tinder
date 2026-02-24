@@ -19,6 +19,8 @@ const ThreadsFeed: React.FC<ThreadsFeedProps> = ({ currentUser, onOpenProfile })
     const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
     const [searchParams] = useSearchParams();
 
+    const isAdmin = currentUser.twitch_username?.toLowerCase() === 'grenbaud';
+
     // Focus/highlight a specific post when coming from a notification
     useEffect(() => {
         const focusPostId = searchParams.get('focusPost');
@@ -37,6 +39,12 @@ const ThreadsFeed: React.FC<ThreadsFeedProps> = ({ currentUser, onOpenProfile })
     const fetchPosts = useCallback(async () => {
         try {
             const data = await getEsploraPosts(currentUser.id);
+            // Sort: pinned first, then by date
+            data.sort((a, b) => {
+                if (a.is_pinned && !b.is_pinned) return -1;
+                if (!a.is_pinned && b.is_pinned) return 1;
+                return 0; // keep original date order
+            });
             setPosts(data);
         } catch (err) {
             console.error('Error fetching posts:', err);
@@ -67,7 +75,7 @@ const ThreadsFeed: React.FC<ThreadsFeedProps> = ({ currentUser, onOpenProfile })
 
     const handleDeletePost = async (postId: string) => {
         if (!confirm('Vuoi eliminare questo post?')) return;
-        const success = await deleteEsploraPost(postId, currentUser.id);
+        const success = await deleteEsploraPost(postId, currentUser.id, isAdmin);
         if (success) {
             setPosts(prev => prev.filter(p => p.id !== postId));
         }
@@ -128,6 +136,8 @@ const ThreadsFeed: React.FC<ThreadsFeedProps> = ({ currentUser, onOpenProfile })
                         <ThreadPost
                             post={post}
                             currentUserId={currentUser.id}
+                            currentUsername={currentUser.twitch_username}
+                            isAdmin={isAdmin}
                             onLike={fetchPosts}
                             onDelete={() => handleDeletePost(post.id)}
                             onImageClick={(url) => setLightboxUrl(url)}

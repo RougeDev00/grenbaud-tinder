@@ -295,17 +295,6 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
             {/* Header */}
             <div className="grid-header">
                 <h2 className="grid-title">{title}</h2>
-                <button
-                    className={`btn-demo ${isDemo ? 'btn-demo--active' : ''}`}
-                    onClick={() => {
-                        if (!isDemo && mockProfiles.length === 0) {
-                            setMockProfiles(generateMockProfiles(100));
-                        }
-                        setIsDemo(!isDemo);
-                    }}
-                >
-                    {isDemo ? 'Disattiva Demo' : 'Simula 100 Utenti'}
-                </button>
             </div>
 
             {/* Search Bar */}
@@ -513,9 +502,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                 </div>
             )}
 
-            <div style={{ textAlign: 'center', opacity: 0.7, fontSize: '0.8rem', padding: '20px 0', color: 'rgba(255,255,255,0.5)' }}>
-                v0.2.4
-            </div>
+
         </div>
     );
 };
