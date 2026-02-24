@@ -20,10 +20,10 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
     useEffect(() => {
         if (!currentUser?.id || !profile?.id) return;
 
-        // 1. Check local cache quickly
         const cacheKey = getCompatibilityCacheKey(currentUser.id, profile.id);
-        const cached = getCachedCompatibility(cacheKey);
 
+        // Show cached value immediately for fast UX
+        const cached = getCachedCompatibility(cacheKey);
         if (cached) {
             setMatchScore(cached.score);
             setCompatibilityExplanation(cached.explanation);
@@ -33,21 +33,28 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
             const estimated = calculateCompatibility(currentUser, profile);
             setMatchScore(estimated);
             setIsEstimated(true);
-
-            // Fetch final stored score
-            const fetchStored = async () => {
-                if (!currentUser?.id || !profile?.id) return;
-                const stored = await getStoredCompatibility(currentUser.id, profile.id);
-                if (stored) {
-                    setMatchScore(stored.score);
-                    setCompatibilityExplanation(stored.explanation);
-                    setIsEstimated(false);
-                }
-            };
-            fetchStored();
         }
 
-        // 3. Check if chat is unlocked (mutual analysis)
+        // ALWAYS verify against DB (source of truth)
+        const verifyWithDB = async () => {
+            if (!currentUser?.id || !profile?.id) return;
+            const stored = await getStoredCompatibility(currentUser.id, profile.id);
+            if (stored) {
+                setMatchScore(stored.score);
+                setCompatibilityExplanation(stored.explanation);
+                setIsEstimated(false);
+            } else {
+                // Score was deleted from DB — clear stale cache and reset
+                try { localStorage.removeItem(cacheKey); } catch (_) { /* */ }
+                const estimated = calculateCompatibility(currentUser, profile);
+                setMatchScore(estimated);
+                setCompatibilityExplanation(null);
+                setIsEstimated(true);
+            }
+        };
+        verifyWithDB();
+
+        // Check if chat is unlocked (mutual analysis)
         const fetchUnlockStatus = async () => {
             if (!currentUser?.id || !profile?.id) return;
             const unlocked = await checkMutualAnalysis(currentUser.id, profile.id);
@@ -55,6 +62,7 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
         };
         fetchUnlockStatus();
     }, [currentUser, profile]);
+
 
     const handleGenerateCompatibility = async () => {
         if (!matchScore || isExplanationLoading) return;

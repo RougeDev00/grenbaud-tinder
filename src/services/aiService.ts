@@ -233,13 +233,9 @@ export const getStoredCompatibility = async (
     id1: string,
     id2: string
 ): Promise<{ score: number; explanation: string } | null> => {
-    // 1. Check localStorage for instant feedback
-    const key = getCompatibilityCacheKey(id1, id2);
-    const cached = getCachedCompatibility(key);
-    if (cached) return cached;
-
-    // 2. Check Supabase (source of truth)
+    // Always check Supabase (source of truth)
     if (!isSupabaseConfigured) return null;
+    const key = getCompatibilityCacheKey(id1, id2);
     try {
         const [user_a, user_b] = sortedPair(id1, id2);
         const { data, error } = await supabase
@@ -253,7 +249,11 @@ export const getStoredCompatibility = async (
             console.error('[DB] Error fetching compatibility score:', error);
             return null;
         }
-        if (!data) return null;
+        if (!data) {
+            // Score was deleted — clear stale localStorage cache
+            try { localStorage.removeItem(key); } catch (_) { /* */ }
+            return null;
+        }
 
         // Hydrate localStorage cache so next call is instant
         try {
