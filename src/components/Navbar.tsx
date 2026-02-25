@@ -120,7 +120,7 @@ const Navbar: React.FC<NavbarProps> = ({ unreadCount = 0 }) => {
                     <div className="navbar-header-left">
                         <div className="navbar-version-pill">
                             <span className="version-dot" />
-                            <span className="version-text">v0.7.4</span>
+                            <span className="version-text">v0.7.5</span>
                             <span className="version-divider" />
                             <span className="version-beta">accesso anticipato</span>
                         </div>

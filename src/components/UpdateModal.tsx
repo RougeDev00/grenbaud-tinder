@@ -3,15 +3,15 @@ import React, { useState, useEffect } from 'react';
 // ── All versions, newest first ──
 const ALL_VERSIONS = [
     {
-        version: '0.7.4',
+        version: '0.7.5',
         date: '25 Feb 2026',
         items: [
-            { emoji: '❤️', text: 'Fix like ai post: ora i like persistono anche dopo il refresh' },
-            { emoji: '🔔', text: 'Fix notifiche: le notifiche like arrivano di nuovo correttamente' },
-            { emoji: '📸', text: 'Foto profilo: ora puoi scorrere tra le foto direttamente dalla griglia' },
-            { emoji: '♾️', text: 'Scroll infinito: la sezione Tutti ora carica profili senza fermarsi' },
-            { emoji: '🖼️', text: 'Profilo completo: tutte le foto e i dati si caricano al click' },
-            { emoji: '⚡', text: 'Performance: caricamento profili ottimizzato con paginazione DB' },
+            { emoji: '🔒', text: 'Sicurezza chat: ora serve affinità AI reciproca per chattare' },
+            { emoji: '🔔', text: 'Notifiche SPY: cliccando si apre il profilo della persona' },
+            { emoji: '💜', text: 'Affinità reciproca: entrambi gli utenti ricevono la notifica' },
+            { emoji: '🧠', text: 'Modifica profilo: popup per rigenerare il riassunto AI' },
+            { emoji: '♾️', text: 'Scroll infinito più fluido e affidabile' },
+            { emoji: '📸', text: 'Foto profilo: swipe tra le foto nella griglia' },
         ],
     },
     {
