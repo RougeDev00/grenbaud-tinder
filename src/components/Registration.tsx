@@ -219,12 +219,60 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
         switch (step) {
             case 1: return tosAccepted;
             case 2: return displayName.trim().length > 0 && photos.some(p => p !== '') && gender !== '' && age !== '' && city.trim().length > 0;
-            case 3: return bio.trim().length > 0 && freeTime.trim().length > 0;
-            case 4: return music.trim().length > 0 || youtube.trim().length > 0;
-            case 5: return true; // Questions are optional but encouraged
-            case 6: return true; // Personality Quiz is optional
-            case 7: return grenbaudIs.trim().length > 0 && zodiac !== '';
+            case 3: return bio.trim().length > 0 && freeTime.trim().length > 0 && hobbies.trim().length > 0;
+            case 4: return music.trim().length > 0 && musicArtists.trim().length > 0 && youtube.trim().length > 0 && youtubeChannels.trim().length > 0 && twitchWatches.trim().length > 0 && twitchStreamers.trim().length > 0;
+            case 5: return questionDream.trim().length > 0 && questionWeekend.trim().length > 0 && questionRedflag.trim().length > 0;
+            case 6: return true; // Personality Quiz can be skipped
+            case 7: return grenbaudIs.trim().length > 0 && zodiac !== '' && lookingFor !== '';
             default: return false;
+        }
+    };
+
+    const getValidationMessage = (): string | null => {
+        if (canProceed()) return null;
+        switch (step) {
+            case 1: return 'Devi accettare le regole per continuare';
+            case 2: {
+                const missing: string[] = [];
+                if (!photos.some(p => p !== '')) missing.push('almeno 1 foto');
+                if (!displayName.trim()) missing.push('nome');
+                if (!age) missing.push('età');
+                if (!city.trim()) missing.push('città');
+                if (!gender) missing.push('genere');
+                return `Compila: ${missing.join(', ')}`;
+            }
+            case 3: {
+                const missing: string[] = [];
+                if (!bio.trim()) missing.push('bio');
+                if (!freeTime.trim()) missing.push('tempo libero');
+                if (!hobbies.trim()) missing.push('hobby');
+                return `Compila: ${missing.join(', ')}`;
+            }
+            case 4: {
+                const missing: string[] = [];
+                if (!music.trim()) missing.push('generi musicali');
+                if (!musicArtists.trim()) missing.push('artisti');
+                if (!youtube.trim()) missing.push('cosa guardi su YouTube');
+                if (!youtubeChannels.trim()) missing.push('youtuber preferiti');
+                if (!twitchWatches.trim()) missing.push('cosa guardi su Twitch');
+                if (!twitchStreamers.trim()) missing.push('streamer preferiti');
+                return `Compila: ${missing.join(', ')}`;
+            }
+            case 5: {
+                const missing: string[] = [];
+                if (!questionDream.trim()) missing.push('sogno nel cassetto');
+                if (!questionWeekend.trim()) missing.push('weekend ideale');
+                if (!questionRedflag.trim()) missing.push('red flag');
+                return `Compila: ${missing.join(', ')}`;
+            }
+            case 7: {
+                const missing: string[] = [];
+                if (!grenbaudIs.trim()) missing.push('"GrenBaud è..."');
+                if (!zodiac) missing.push('segno zodiacale');
+                if (!lookingFor) missing.push('"cosa ti porta qui"');
+                return `Compila: ${missing.join(', ')}`;
+            }
+            default: return null;
         }
     };
 
@@ -903,6 +951,24 @@ const Registration: React.FC<RegistrationProps> = ({ onComplete }) => {
                     </>
                 )}
             </div>
+
+            {/* Validation message */}
+            {!canProceed() && step !== 6 && (
+                <div style={{
+                    textAlign: 'center',
+                    color: '#f87171',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    padding: '8px 16px',
+                    margin: '0 16px 8px',
+                    background: 'rgba(248, 113, 113, 0.08)',
+                    border: '1px solid rgba(248, 113, 113, 0.2)',
+                    borderRadius: '10px',
+                    fontFamily: "'Inter', sans-serif",
+                }}>
+                    ⚠️ {getValidationMessage()}
+                </div>
+            )}
 
             {/* Navigation */}
             <div className="reg-nav">
