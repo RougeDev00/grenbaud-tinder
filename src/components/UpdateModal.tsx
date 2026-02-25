@@ -3,14 +3,15 @@ import React, { useState, useEffect } from 'react';
 // ── All versions, newest first ──
 const ALL_VERSIONS = [
     {
-        version: '0.7.3',
+        version: '0.7.4 beta',
         date: '25 Feb 2026',
         items: [
-            { emoji: '🎨', text: 'Header ultra premium: mesh animata, particelle, glow e pattern futuristico' },
-            { emoji: '✨', text: 'Logo con animazione flottante e doppio glow' },
-            { emoji: '🏷️', text: 'Nuovo badge versione premium con indicatore live' },
-            { emoji: '🚀', text: 'Caricamento immagini profili ottimizzato (lazy loading)' },
-            { emoji: '⚡', text: 'Query profili alleggerita per performance migliori' },
+            { emoji: '❤️', text: 'Fix like ai post: ora i like persistono anche dopo il refresh' },
+            { emoji: '🔔', text: 'Fix notifiche: le notifiche like arrivano di nuovo correttamente' },
+            { emoji: '📸', text: 'Foto profilo: ora puoi scorrere tra le foto direttamente dalla griglia' },
+            { emoji: '♾️', text: 'Scroll infinito: la sezione Tutti ora carica profili senza fermarsi' },
+            { emoji: '🖼️', text: 'Profilo completo: tutte le foto e i dati si caricano al click' },
+            { emoji: '⚡', text: 'Performance: caricamento profili ottimizzato con paginazione DB' },
         ],
     },
     {
