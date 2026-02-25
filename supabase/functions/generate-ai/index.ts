@@ -18,53 +18,54 @@ function getCorsHeaders(req: Request) {
     };
 }
 
-// ── RATE LIMITING (10 req/min per user) ──
-const RATE_LIMIT = 10;
-const userCalls = new Map<string, number[]>();
-
-function isRateLimited(userId: string): boolean {
-    const now = Date.now();
-    const timestamps = (userCalls.get(userId) || []).filter(t => t > now - 60000);
-    if (timestamps.length >= RATE_LIMIT) {
-        userCalls.set(userId, timestamps);
-        return true;
-    }
-    timestamps.push(now);
-    userCalls.set(userId, timestamps);
-    return false;
-}
-
 serve(async (req) => {
     const cors = getCorsHeaders(req);
     if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
     try {
+        // ─── JWT Authentication ───────────────────────────────────
         const authHeader = req.headers.get("Authorization");
         if (!authHeader?.startsWith("Bearer ")) {
             return new Response(JSON.stringify({ error: "Missing auth token" }),
                 { headers: { ...cors, "Content-Type": "application/json" }, status: 401 });
         }
 
-        const supabase = createClient(
+        // User client (with user's JWT — for auth verification)
+        const supabaseUser = createClient(
             Deno.env.get("SUPABASE_URL")!,
             Deno.env.get("SUPABASE_ANON_KEY")!,
             { global: { headers: { Authorization: authHeader } } }
         );
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
         if (authError || !user) {
             return new Response(JSON.stringify({ error: "Unauthorized" }),
                 { headers: { ...cors, "Content-Type": "application/json" }, status: 401 });
         }
 
-        // ── RATE LIMIT CHECK ──
-        if (isRateLimited(user.id)) {
+        // ─── DB Rate Limit Check (persistent, 1000/day) ──────────
+        // Service role client (bypasses RLS, can call the rate limit function)
+        const supabaseAdmin = createClient(
+            Deno.env.get("SUPABASE_URL")!,
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+        );
+
+        const { data: allowed, error: rlError } = await supabaseAdmin.rpc(
+            'check_ai_rate_limit',
+            { p_user_id: user.id, p_daily_max: 1000 }
+        );
+
+        if (rlError) {
+            console.error("Rate limit check error:", rlError);
+            // Fail open on DB error (don't block users if DB hiccups)
+        } else if (allowed === false) {
             return new Response(
-                JSON.stringify({ error: "Limite raggiunto: max 10 richieste al minuto." }),
+                JSON.stringify({ error: "Hai raggiunto il limite di 1000 richieste AI al giorno. Riprova domani." }),
                 { headers: { ...cors, "Content-Type": "application/json" }, status: 429 }
             );
         }
 
+        // ─── Process AI request ───────────────────────────────────
         const { action, payload } = await req.json();
         const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
         let result = null;
@@ -95,6 +96,7 @@ serve(async (req) => {
             headers: { ...cors, "Content-Type": "application/json" }, status: 200
         });
     } catch (error) {
+        console.error("AI Function Error:", error);
         return new Response(JSON.stringify({ error: error.message }),
             { headers: { ...cors, "Content-Type": "application/json" }, status: 400 });
     }
