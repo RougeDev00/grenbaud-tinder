@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Profile } from '../types';
-import { getGridProfiles, getTotalProfileCount } from '../services/profileService';
+import { getGridProfiles, getTotalProfileCount, getProfile } from '../services/profileService';
 import { supabase } from '../lib/supabase';
 import { generateMockProfiles } from '../lib/mockData';
 import { geocodeCity, haversineDistance } from '../utils/geo';
@@ -135,6 +135,13 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         }
     }, [loadingMore, hasMore, dbPage, currentUser.twitch_id]);
 
+    // Fetch full profile (with all photos/data) before opening detail view
+    const openFullProfile = useCallback(async (slimProfile: Profile) => {
+        // Try to fetch full profile from DB
+        const full = await getProfile(slimProfile.id);
+        setSelectedProfile(full || slimProfile);
+    }, []);
+
     // Handle deep linking from SPY notifications
     useEffect(() => {
         const profileId = searchParams.get('profile');
@@ -142,13 +149,13 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
             const source = isDemo ? mockProfiles : profiles;
             const target = source.find(p => p.id === profileId);
             if (target) {
-                setSelectedProfile(target);
+                openFullProfile(target);
                 // Clear the parameter so going back doesn't immediately reopen it
                 searchParams.delete('profile');
                 setSearchParams(searchParams, { replace: true });
             }
         }
-    }, [searchParams, profiles, mockProfiles, isDemo, setSearchParams]);
+    }, [searchParams, profiles, mockProfiles, isDemo, setSearchParams, openFullProfile]);
 
     // Geocode when applied city filter changes
     const computeDistances = useCallback(async (city: string, source: Profile[]) => {
@@ -567,7 +574,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                             <ProfileCard
                                 profile={profile}
                                 currentUser={currentUser}
-                                onOpenProfile={() => setSelectedProfile(profile)}
+                                onOpenProfile={() => openFullProfile(profile)}
                             />
                         </div>
                     );
