@@ -5,7 +5,7 @@ import { getGridProfiles, getTotalProfileCount, getProfile } from '../services/p
 import { supabase } from '../lib/supabase';
 import { generateMockProfiles } from '../lib/mockData';
 import { geocodeCity, haversineDistance } from '../utils/geo';
-import { getCompatibilityCacheKey } from '../services/aiService';
+
 import ProfileCard from './ProfileCard';
 import ProfileView from './ProfileView';
 import './ProfileGrid.css';
@@ -61,6 +61,9 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     // Geo distance state
     const [profileDistances, setProfileDistances] = useState<Map<string, number>>(new Map());
 
+    // Confirmed compatibility IDs (from DB)
+    const [confirmedIds, setConfirmedIds] = useState<Set<string>>(new Set());
+
     // Total count from DB
     const [totalCount, setTotalCount] = useState<number>(0);
 
@@ -85,6 +88,27 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
             }
         };
         fetchProfiles();
+
+        // Fetch confirmed compatibility IDs
+        const fetchConfirmed = async () => {
+            try {
+                const { data } = await supabase
+                    .from('compatibility_scores')
+                    .select('user_a, user_b')
+                    .or(`user_a.eq.${currentUser.id},user_b.eq.${currentUser.id}`);
+                if (data) {
+                    const ids = new Set<string>();
+                    data.forEach((row: any) => {
+                        if (row.user_a === currentUser.id) ids.add(row.user_b);
+                        else ids.add(row.user_a);
+                    });
+                    setConfirmedIds(ids);
+                }
+            } catch (err) {
+                console.error('Error fetching confirmed IDs:', err);
+            }
+        };
+        fetchConfirmed();
     }, [currentUser.twitch_id]);
 
     // Realtime: listen for new/updated profiles to keep cache fresh
@@ -278,8 +302,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
 
             // Affinity type filter
             if (affinityFilter !== 'all') {
-                const key = getCompatibilityCacheKey(currentUser.id, p.id);
-                const isConfirmed = !!localStorage.getItem(key);
+                const isConfirmed = confirmedIds.has(p.id);
                 if (affinityFilter === 'confirmed' && !isConfirmed) return false;
                 if (affinityFilter === 'estimated' && isConfirmed) return false;
             }
