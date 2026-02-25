@@ -3,6 +3,17 @@ import React, { useState, useEffect } from 'react';
 // ── All versions, newest first ──
 const ALL_VERSIONS = [
     {
+        version: '0.7.3',
+        date: '25 Feb 2026',
+        items: [
+            { emoji: '🎨', text: 'Header ultra premium: mesh animata, particelle, glow e pattern futuristico' },
+            { emoji: '✨', text: 'Logo con animazione flottante e doppio glow' },
+            { emoji: '🏷️', text: 'Nuovo badge versione premium con indicatore live' },
+            { emoji: '🚀', text: 'Caricamento immagini profili ottimizzato (lazy loading)' },
+            { emoji: '⚡', text: 'Query profili alleggerita per performance migliori' },
+        ],
+    },
+    {
         version: '0.7.2',
         date: '25 Feb 2026',
         items: [

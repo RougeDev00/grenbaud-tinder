@@ -3,7 +3,7 @@
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
-    padding-top: calc(60px + env(safe-area-inset-top, 0px));
+    padding-top: calc(80px + env(safe-area-inset-top, 0px));
     /* Bottom navbar handles its own safe-area padding internally */
     padding-bottom: 56px;
 }

@@ -68,23 +68,75 @@ const Navbar: React.FC<NavbarProps> = ({ unreadCount = 0 }) => {
 
     return (
         <>
-            {/* Top header bar with logo */}
+            {/* Top header bar with logo — Ultra Premium */}
             <header className="navbar-header">
-                <div className="navbar-header-left">
-                    <span className="navbar-version-badge">v0.7.1</span>
-                    <span className="navbar-version-beta">beta</span>
+                {/* Animated mesh background */}
+                <div className="header-mesh-bg">
+                    <svg className="header-mesh-svg" viewBox="0 0 800 120" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="meshGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.15" />
+                                <stop offset="50%" stopColor="#a855f7" stopOpacity="0.08" />
+                                <stop offset="100%" stopColor="#ec4899" stopOpacity="0.12" />
+                            </linearGradient>
+                            <linearGradient id="meshGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.1" />
+                                <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.06" />
+                            </linearGradient>
+                            <radialGradient id="glowCenter" cx="50%" cy="50%" r="40%">
+                                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.2" />
+                                <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
+                            </radialGradient>
+                        </defs>
+                        {/* Grid lines */}
+                        <g className="header-grid-lines" stroke="rgba(139,92,246,0.06)" strokeWidth="0.5" fill="none">
+                            {Array.from({ length: 16 }, (_, i) => (
+                                <line key={`v${i}`} x1={i * 53} y1="0" x2={i * 53} y2="120" />
+                            ))}
+                            {Array.from({ length: 5 }, (_, i) => (
+                                <line key={`h${i}`} x1="0" y1={i * 30} x2="800" y2={i * 30} />
+                            ))}
+                        </g>
+                        {/* Flowing wave 1 */}
+                        <path className="header-wave header-wave-1" d="M0,80 C150,40 300,100 450,60 C600,20 700,90 800,50" fill="none" stroke="url(#meshGrad1)" strokeWidth="1.5" />
+                        {/* Flowing wave 2 */}
+                        <path className="header-wave header-wave-2" d="M0,40 C100,80 250,20 400,70 C550,120 650,30 800,80" fill="none" stroke="url(#meshGrad2)" strokeWidth="1" />
+                        {/* Center glow orb */}
+                        <circle className="header-glow-orb" cx="400" cy="60" r="120" fill="url(#glowCenter)" />
+                        {/* Floating particles */}
+                        <circle className="header-particle header-particle-1" cx="150" cy="30" r="1.5" fill="#a78bfa" opacity="0.4" />
+                        <circle className="header-particle header-particle-2" cx="350" cy="80" r="1" fill="#c084fc" opacity="0.3" />
+                        <circle className="header-particle header-particle-3" cx="550" cy="25" r="2" fill="#818cf8" opacity="0.35" />
+                        <circle className="header-particle header-particle-4" cx="650" cy="70" r="1.2" fill="#a78bfa" opacity="0.25" />
+                        <circle className="header-particle header-particle-5" cx="100" cy="90" r="1.8" fill="#c084fc" opacity="0.3" />
+                    </svg>
                 </div>
-                <div className="navbar-header-center">
-                    <img
-                        src="/baudr-logo.png"
-                        alt="Baudr"
-                        className="navbar-logo"
-                        onClick={() => navigate('/')}
-                    />
-                    <span className="navbar-tagline">Community di GrenBaud</span>
-                </div>
-                <div className="navbar-header-right">
-                    <NotificationBell />
+
+                {/* Accent border line */}
+                <div className="header-accent-line" />
+
+                {/* Content */}
+                <div className="navbar-header-inner">
+                    <div className="navbar-header-left">
+                        <div className="navbar-version-pill">
+                            <span className="version-dot" />
+                            <span className="version-text">v0.7.3</span>
+                            <span className="version-divider" />
+                            <span className="version-beta">β</span>
+                        </div>
+                    </div>
+                    <div className="navbar-header-center">
+                        <img
+                            src="/baudr-logo.png"
+                            alt="Baudr"
+                            className="navbar-logo"
+                            onClick={() => navigate('/')}
+                        />
+                        <span className="navbar-tagline">Community di GrenBaud</span>
+                    </div>
+                    <div className="navbar-header-right">
+                        <NotificationBell />
+                    </div>
                 </div>
             </header>
 
