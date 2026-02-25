@@ -19,6 +19,70 @@ function getCorsHeaders(req: Request) {
     };
 }
 
+// ═══════════════════════════════════════════════════════════
+// RATE LIMITING — in-memory per user
+// ═══════════════════════════════════════════════════════════
+const RATE_LIMIT_PER_MINUTE = 5;
+const RATE_LIMIT_PER_DAY = 1000;
+
+interface UserRateData {
+    minuteTimestamps: number[];  // timestamps of calls in current minute window
+    dayCount: number;            // total calls today
+    dayReset: number;            // timestamp when day counter resets
+}
+
+const rateLimitStore = new Map<string, UserRateData>();
+
+// Cleanup stale entries every 10 minutes to prevent memory leaks
+setInterval(() => {
+    const now = Date.now();
+    for (const [userId, data] of rateLimitStore) {
+        // Remove users who haven't made a call in over 2 hours
+        if (data.minuteTimestamps.length === 0 && now > data.dayReset) {
+            rateLimitStore.delete(userId);
+        }
+    }
+}, 10 * 60 * 1000);
+
+function checkRateLimit(userId: string): { allowed: boolean; retryAfterMs?: number; reason?: string } {
+    const now = Date.now();
+    const oneMinuteAgo = now - 60_000;
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
+    let data = rateLimitStore.get(userId);
+    if (!data) {
+        data = { minuteTimestamps: [], dayCount: 0, dayReset: now + oneDayMs };
+        rateLimitStore.set(userId, data);
+    }
+
+    // Reset daily counter if past reset time
+    if (now >= data.dayReset) {
+        data.dayCount = 0;
+        data.dayReset = now + oneDayMs;
+    }
+
+    // Check daily limit
+    if (data.dayCount >= RATE_LIMIT_PER_DAY) {
+        const retryAfterMs = data.dayReset - now;
+        return { allowed: false, retryAfterMs, reason: `Limite giornaliero raggiunto (${RATE_LIMIT_PER_DAY}/giorno). Riprova domani.` };
+    }
+
+    // Clean old minute timestamps
+    data.minuteTimestamps = data.minuteTimestamps.filter(t => t > oneMinuteAgo);
+
+    // Check per-minute limit
+    if (data.minuteTimestamps.length >= RATE_LIMIT_PER_MINUTE) {
+        const oldestInWindow = data.minuteTimestamps[0];
+        const retryAfterMs = (oldestInWindow + 60_000) - now;
+        return { allowed: false, retryAfterMs, reason: `Troppo veloce! Max ${RATE_LIMIT_PER_MINUTE} richieste al minuto. Riprova tra ${Math.ceil(retryAfterMs / 1000)}s.` };
+    }
+
+    // Allowed — record the call
+    data.minuteTimestamps.push(now);
+    data.dayCount++;
+    return { allowed: true };
+}
+
 serve(async (req) => {
     const cors = getCorsHeaders(req);
 
@@ -49,6 +113,22 @@ serve(async (req) => {
             return new Response(
                 JSON.stringify({ error: "Unauthorized — invalid or expired token" }),
                 { headers: { ...cors, "Content-Type": "application/json" }, status: 401 }
+            );
+        }
+
+        // ─── Rate Limiting ────────────────────────────────────────
+        const rateCheck = checkRateLimit(user.id);
+        if (!rateCheck.allowed) {
+            return new Response(
+                JSON.stringify({ error: rateCheck.reason }),
+                {
+                    headers: {
+                        ...cors,
+                        "Content-Type": "application/json",
+                        "Retry-After": String(Math.ceil((rateCheck.retryAfterMs || 60000) / 1000)),
+                    },
+                    status: 429,
+                }
             );
         }
 
