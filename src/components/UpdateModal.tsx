@@ -3,6 +3,17 @@ import React, { useState, useEffect } from 'react';
 // ── All versions, newest first ──
 const ALL_VERSIONS = [
     {
+        version: '0.7.2',
+        date: '25 Feb 2026',
+        items: [
+            { emoji: '🔒', text: 'Sicurezza AI potenziata: autenticazione JWT e CORS ristretto' },
+            { emoji: '🧠', text: 'Fix test personalità: i punteggi ora si salvano correttamente' },
+            { emoji: '📊', text: 'Fix barre personalità che mostravano 100% dopo re-login' },
+            { emoji: '🛡️', text: 'Protezione Edge Function contro accessi non autorizzati' },
+            { emoji: '⚡', text: 'Miglioramenti stabilità e performance' },
+        ],
+    },
+    {
         version: '0.7.1',
         date: '24 Feb 2026',
         items: [
