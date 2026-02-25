@@ -189,7 +189,7 @@ export async function getAllProfiles(page: number = 0, limit: number = 20, exclu
 const GRID_COLUMNS = [
     'id', 'twitch_id', 'twitch_username', 'display_name',
     'age', 'city', 'gender', 'zodiac_sign',
-    'photo_1',
+    'photo_1', 'photo_2', 'photo_3',
     'personality_type',
     'hobbies', 'music_artists', 'twitch_streamers', 'youtube_channels',
     'bio', 'looking_for',

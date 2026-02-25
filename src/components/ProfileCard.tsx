@@ -1,8 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import type { Profile } from '../types';
 import { calculateCompatibility } from '../utils/compatibility';
 import { getCompatibilityCacheKey, getCachedCompatibility } from '../services/aiService';
-import { getProfilePhotos } from '../services/profileService';
 import './ProfileCard.css';
 
 interface ProfileCardProps {
@@ -26,7 +25,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
     React.useEffect(() => {
         if (!currentUser || !profile) return;
 
-        // Check localStorage cache only (instant, no DB call)
         const cacheKey = getCompatibilityCacheKey(currentUser.id, profile.id);
         const cached = getCachedCompatibility(cacheKey);
 
@@ -34,35 +32,16 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
             setMatchScore(cached.score);
             setIsEstimated(false);
         } else {
-            // Estimated calculation (sync, no network)
             const estimated = calculateCompatibility(currentUser, profile);
             setMatchScore(estimated);
             setIsEstimated(true);
         }
     }, [currentUser, profile]);
 
-    // Lazy photo loading: start with photo_1 only, load others on swipe
-    const [photos, setPhotos] = useState<string[]>([profile.photo_1].filter(Boolean));
-    const [photosLoaded, setPhotosLoaded] = useState(false);
-    const photosLoadingRef = useRef(false);
+    // All photo URLs from profile (images lazy-load via browser)
+    const photos = [profile.photo_1, profile.photo_2, profile.photo_3].filter(Boolean) as string[];
     const [currentPhoto, setCurrentPhoto] = useState(0);
     const [isCenterHovered, setIsCenterHovered] = useState(false);
-
-    // Load extra photos on first swipe attempt
-    const loadExtraPhotos = async () => {
-        if (photosLoaded || photosLoadingRef.current) return;
-        photosLoadingRef.current = true;
-        try {
-            const extra = await getProfilePhotos(profile.id);
-            const allPhotos = [profile.photo_1, extra.photo_2, extra.photo_3].filter(Boolean) as string[];
-            setPhotos(allPhotos);
-        } catch (err) {
-            console.error('Error loading extra photos:', err);
-        } finally {
-            setPhotosLoaded(true);
-            photosLoadingRef.current = false;
-        }
-    };
 
     // Key processing
     const rawType = profile.personality_type || '';
@@ -96,7 +75,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
         setIsCenterHovered(false);
     };
 
-    const handlePhotoTap = async (e: React.MouseEvent | React.TouchEvent) => {
+    const handlePhotoTap = (e: React.MouseEvent | React.TouchEvent) => {
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         const clientY = 'touches' in e ? (e as any).changedTouches[0].clientY : (e as React.MouseEvent).clientY;
 
@@ -113,14 +92,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
         if (zone === 'left') {
             setCurrentPhoto(prev => Math.max(0, prev - 1));
         } else if (zone === 'right') {
-            // Load extra photos on first right-swipe
-            if (!photosLoaded) {
-                await loadExtraPhotos();
-                // After loading, move to photo 1 (the newly loaded one)
-                setCurrentPhoto(1);
-            } else {
-                setCurrentPhoto(prev => Math.min(photos.length - 1, prev + 1));
-            }
+            setCurrentPhoto(prev => Math.min(photos.length - 1, prev + 1));
         } else {
             onOpenProfile?.();
         }
