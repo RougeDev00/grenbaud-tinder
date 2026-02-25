@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 // ── All versions, newest first ──
 const ALL_VERSIONS = [
     {
-        version: '0.7.4 beta',
+        version: '0.7.4',
         date: '25 Feb 2026',
         items: [
             { emoji: '❤️', text: 'Fix like ai post: ora i like persistono anche dopo il refresh' },
