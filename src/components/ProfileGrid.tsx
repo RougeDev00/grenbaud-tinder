@@ -29,9 +29,11 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     const gridRef = useRef<HTMLDivElement>(null);
     const [columns, setColumns] = useState(5);
 
-    // Infinite scroll: render profiles progressively
-    const BATCH_SIZE = 20;
-    const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+    // True DB pagination
+    const PAGE_SIZE = 30;
+    const [dbPage, setDbPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
 
     // Draft filter state (what user edits in the panel)
@@ -57,13 +59,15 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     // Geo distance state
     const [profileDistances, setProfileDistances] = useState<Map<string, number>>(new Map());
 
+    // Load first page
     useEffect(() => {
         const fetchProfiles = async () => {
             setLoading(true);
             try {
-                const data = await getGridProfiles(currentUser.twitch_id);
-                const filtered = data.filter(p => p.twitch_id !== currentUser.twitch_id);
-                setProfiles(filtered);
+                const data = await getGridProfiles(currentUser.twitch_id, 0, PAGE_SIZE);
+                setProfiles(data);
+                setHasMore(data.length >= PAGE_SIZE);
+                setDbPage(1);
             } catch (err) {
                 console.error('Error loading grid:', err);
             } finally {
@@ -72,6 +76,26 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         };
         fetchProfiles();
     }, [currentUser.twitch_id]);
+
+    // Load more pages on scroll
+    const loadMore = useCallback(async () => {
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const data = await getGridProfiles(currentUser.twitch_id, dbPage, PAGE_SIZE);
+            if (data.length < PAGE_SIZE) setHasMore(false);
+            setProfiles(prev => {
+                const existingIds = new Set(prev.map(p => p.id));
+                const newProfiles = data.filter(p => !existingIds.has(p.id));
+                return [...prev, ...newProfiles];
+            });
+            setDbPage(prev => prev + 1);
+        } catch (err) {
+            console.error('Error loading more profiles:', err);
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [loadingMore, hasMore, dbPage, currentUser.twitch_id]);
 
     // Handle deep linking from SPY notifications
     useEffect(() => {
@@ -242,7 +266,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         });
     }, [profiles, mockProfiles, isDemo, searchQuery, genderFilter, ageMin, ageMax, cityFilter, cityKm, keywordFilter, affinityFilter, profileDistances, currentUser.id]);
 
-    // Infinite scroll observer
+    // Infinite scroll — load more from DB
     useEffect(() => {
         const sentinel = sentinelRef.current;
         if (!sentinel) return;
@@ -250,7 +274,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    setVisibleCount(prev => prev + BATCH_SIZE);
+                    loadMore();
                 }
             },
             { rootMargin: '400px' }
@@ -258,12 +282,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
 
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, [filteredProfiles.length]);
-
-    // Reset visible count when filters change
-    useEffect(() => {
-        setVisibleCount(BATCH_SIZE);
-    }, [searchQuery, genderFilter, ageMin, ageMax, cityFilter, keywordFilter, affinityFilter]);
+    }, [loadMore]);
 
     const clearFilters = () => {
         // Reset drafts
@@ -491,7 +510,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
 
             {/* Grid */}
             <div className="profile-grid" ref={gridRef}>
-                {filteredProfiles.slice(0, visibleCount).map((profile, index) => {
+                {filteredProfiles.map((profile, index) => {
                     const colIndex = index % columns;
                     const isLeftHalf = colIndex < columns / 2;
                     const slideDir = isLeftHalf ? 1 : -1;
@@ -519,7 +538,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
             </div>
 
             {/* Infinite scroll sentinel */}
-            {visibleCount < filteredProfiles.length && (
+            {(hasMore || loadingMore) && (
                 <div ref={sentinelRef} className="grid-load-more">
                     <div className="loading-spinner" style={{ width: 24, height: 24 }} />
                 </div>

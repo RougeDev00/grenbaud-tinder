@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Profile } from '../types';
 import { calculateCompatibility } from '../utils/compatibility';
-import { getStoredCompatibility, getCompatibilityCacheKey, getCachedCompatibility } from '../services/aiService';
+import { getCompatibilityCacheKey, getCachedCompatibility } from '../services/aiService';
 import './ProfileCard.css';
 
 interface ProfileCardProps {
@@ -25,7 +25,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
     React.useEffect(() => {
         if (!currentUser || !profile) return;
 
-        // 1. Initial Synchronous Check (Cache) to avoid flash
+        // Check localStorage cache only (instant, no DB call)
         const cacheKey = getCompatibilityCacheKey(currentUser.id, profile.id);
         const cached = getCachedCompatibility(cacheKey);
 
@@ -33,28 +33,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
             setMatchScore(cached.score);
             setIsEstimated(false);
         } else {
-            // Default to estimated calculation immediately
+            // Estimated calculation (sync, no network)
             const estimated = calculateCompatibility(currentUser, profile);
             setMatchScore(estimated);
             setIsEstimated(true);
-
-            // 2. Async Check (Database)
-            // Only if we don't have a cached final score, or if we want to ensure freshness
-            const fetchStored = async () => {
-                if (!currentUser?.id || !profile?.id) return;
-
-                // Use UUIDs for DB lookup if possible, or whatever getStoredCompatibility expects
-                // getStoredCompatibility currently uses twitch_id for cache keys...
-                // But wait, my recent change to getStoredCompatibility used ID (UUID) for DB query.
-                // WE MUST BE CAREFUL: currentUser.id is the UUID. ProfileCard usually receives full Profile objects.
-
-                const stored = await getStoredCompatibility(currentUser.id, profile.id);
-                if (stored) {
-                    setMatchScore(stored.score);
-                    setIsEstimated(false);
-                }
-            };
-            fetchStored();
         }
     }, [currentUser, profile]);
     const photos = [profile.photo_1, profile.photo_2, profile.photo_3].filter(Boolean);
