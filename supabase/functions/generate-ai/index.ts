@@ -43,22 +43,26 @@ serve(async (req) => {
                 { headers: { ...cors, "Content-Type": "application/json" }, status: 401 });
         }
 
-        // ─── DB Rate Limit Check (persistent, 1000/day) ──────────
+        // ─── DB Rate Limit Check (10/min + 1000/day, persistent) ─
         // Service role client (bypasses RLS, can call the rate limit function)
         const supabaseAdmin = createClient(
             Deno.env.get("SUPABASE_URL")!,
             Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
         );
 
-        const { data: allowed, error: rlError } = await supabaseAdmin.rpc(
+        const { data: rateResult, error: rlError } = await supabaseAdmin.rpc(
             'check_ai_rate_limit',
-            { p_user_id: user.id, p_daily_max: 1000 }
+            { p_user_id: user.id, p_daily_max: 1000, p_minute_max: 10 }
         );
 
         if (rlError) {
             console.error("Rate limit check error:", rlError);
-            // Fail open on DB error (don't block users if DB hiccups)
-        } else if (allowed === false) {
+        } else if (rateResult === 'minute_limit') {
+            return new Response(
+                JSON.stringify({ error: "Troppo veloce! Max 10 richieste al minuto. Aspetta un momento." }),
+                { headers: { ...cors, "Content-Type": "application/json" }, status: 429 }
+            );
+        } else if (rateResult === 'daily_limit') {
             return new Response(
                 JSON.stringify({ error: "Hai raggiunto il limite di 1000 richieste AI al giorno. Riprova domani." }),
                 { headers: { ...cors, "Content-Type": "application/json" }, status: 429 }
