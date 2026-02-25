@@ -16,6 +16,16 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
     const [isExplanationExpanded, setIsExplanationExpanded] = useState(false);
     const [isExplanationLoading, setIsExplanationLoading] = useState(false);
     const [isChatUnlocked, setIsChatUnlocked] = useState(false);
+    const [loadingPhase, setLoadingPhase] = useState(0);
+
+    // Cycle through loading messages
+    useEffect(() => {
+        if (!isExplanationLoading) { setLoadingPhase(0); return; }
+        const interval = setInterval(() => {
+            setLoadingPhase(p => (p + 1) % 5);
+        }, 2500);
+        return () => clearInterval(interval);
+    }, [isExplanationLoading]);
 
     useEffect(() => {
         if (!currentUser?.id || !profile?.id) return;
@@ -130,8 +140,29 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
 
             <div className={`compatibility-reasoning ${isExplanationExpanded || !compatibilityExplanation ? 'expanded' : 'collapsed'}`}>
                 {isExplanationLoading ? (
-                    <div className="compatibility-loading">
-                        <span className="shimmer">Analisi profonda in corso... 🧠 Dai tempo all'AI di scandagliare le vostre vite.</span>
+                    <div className="ai-loading-container">
+                        <div className="ai-loading-orb">
+                            <div className="ai-orb-core">🧠</div>
+                            <div className="ai-orb-ring ai-orb-ring-1"></div>
+                            <div className="ai-orb-ring ai-orb-ring-2"></div>
+                            <div className="ai-orb-ring ai-orb-ring-3"></div>
+                            <div className="ai-orb-particle ai-orb-particle-1">✨</div>
+                            <div className="ai-orb-particle ai-orb-particle-2">🔮</div>
+                            <div className="ai-orb-particle ai-orb-particle-3">💫</div>
+                            <div className="ai-orb-particle ai-orb-particle-4">⚡</div>
+                        </div>
+                        <p className="ai-loading-status" key={loadingPhase}>
+                            {[
+                                "Scansionando i profili...",
+                                "Analizzando le personalità...",
+                                "Confrontando gli interessi...",
+                                "Elaborando la compatibilità...",
+                                "Generando il verdetto finale..."
+                            ][loadingPhase]}
+                        </p>
+                        <div className="ai-loading-bar">
+                            <div className="ai-loading-bar-fill"></div>
+                        </div>
                     </div>
                 ) : compatibilityExplanation ? (
                     <>

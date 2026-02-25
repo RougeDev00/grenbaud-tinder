@@ -1520,3 +1520,191 @@
         transform: none;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PREMIUM AI LOADING ANIMATION
+   ═══════════════════════════════════════════════════════════ */
+
+.ai-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px 30px;
+    gap: 20px;
+}
+
+/* ── Orb ── */
+.ai-loading-orb {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ai-orb-core {
+    font-size: 2.2rem;
+    animation: ai-pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.6)) drop-shadow(0 0 40px rgba(236, 72, 153, 0.3));
+    z-index: 2;
+}
+
+/* ── Rotating rings ── */
+.ai-orb-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid transparent;
+}
+
+.ai-orb-ring-1 {
+    width: 80px;
+    height: 80px;
+    border-top-color: rgba(168, 85, 247, 0.6);
+    border-right-color: rgba(168, 85, 247, 0.2);
+    animation: ai-spin 2s linear infinite;
+}
+
+.ai-orb-ring-2 {
+    width: 95px;
+    height: 95px;
+    border-bottom-color: rgba(236, 72, 153, 0.5);
+    border-left-color: rgba(236, 72, 153, 0.15);
+    animation: ai-spin 3s linear infinite reverse;
+}
+
+.ai-orb-ring-3 {
+    width: 110px;
+    height: 110px;
+    border-top-color: rgba(96, 165, 250, 0.3);
+    border-right-color: rgba(96, 165, 250, 0.1);
+    animation: ai-spin 4s linear infinite;
+}
+
+/* ── Floating particles ── */
+.ai-orb-particle {
+    position: absolute;
+    font-size: 0.85rem;
+    animation: ai-orbit 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
+}
+
+.ai-orb-particle-1 {
+    animation-delay: 0s;
+    --orbit-radius: 55px;
+    --orbit-start: 0deg;
+}
+
+.ai-orb-particle-2 {
+    animation-delay: -0.75s;
+    --orbit-radius: 55px;
+    --orbit-start: 90deg;
+}
+
+.ai-orb-particle-3 {
+    animation-delay: -1.5s;
+    --orbit-radius: 55px;
+    --orbit-start: 180deg;
+}
+
+.ai-orb-particle-4 {
+    animation-delay: -2.25s;
+    --orbit-radius: 55px;
+    --orbit-start: 270deg;
+}
+
+/* ── Status text ── */
+.ai-loading-status {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    margin: 0;
+    animation: ai-fade-in 0.5s ease-out;
+    background: linear-gradient(135deg, #e2e8f0, #d8b4fe);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.3px;
+}
+
+/* ── Progress bar ── */
+.ai-loading-bar {
+    width: 180px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ai-loading-bar-fill {
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, #a855f7, #ec4899, #a855f7);
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: ai-bar-sweep 1.5s ease-in-out infinite;
+}
+
+/* ── Keyframes ── */
+@keyframes ai-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+@keyframes ai-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ai-orbit {
+    0% {
+        transform: rotate(calc(var(--orbit-start))) translateX(var(--orbit-radius)) rotate(calc(-1 * var(--orbit-start)));
+        opacity: 0.4;
+    }
+
+    50% {
+        transform: rotate(calc(var(--orbit-start) + 180deg)) translateX(var(--orbit-radius)) rotate(calc(-1 * (var(--orbit-start) + 180deg)));
+        opacity: 1;
+    }
+
+    100% {
+        transform: rotate(calc(var(--orbit-start) + 360deg)) translateX(var(--orbit-radius)) rotate(calc(-1 * (var(--orbit-start) + 360deg)));
+        opacity: 0.4;
+    }
+}
+
+@keyframes ai-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes ai-bar-sweep {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(350%);
+    }
+}
