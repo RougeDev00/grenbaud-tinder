@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Profile } from '../types';
-import { getAllProfiles } from '../services/profileService';
+import { getGridProfiles } from '../services/profileService';
 import { generateMockProfiles } from '../lib/mockData';
 import { geocodeCity, haversineDistance } from '../utils/geo';
 import { getCompatibilityCacheKey } from '../services/aiService';
@@ -61,7 +61,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         const fetchProfiles = async () => {
             setLoading(true);
             try {
-                const data = await getAllProfiles(0, 1000, currentUser.twitch_id);
+                const data = await getGridProfiles(currentUser.twitch_id);
                 const filtered = data.filter(p => p.twitch_id !== currentUser.twitch_id);
                 setProfiles(filtered);
             } catch (err) {

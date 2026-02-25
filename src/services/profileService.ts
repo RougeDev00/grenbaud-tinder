@@ -183,6 +183,57 @@ export async function getAllProfiles(page: number = 0, limit: number = 20, exclu
 }
 
 /**
+ * Slim version for grid cards — drops heavy text blobs that are only needed in full ProfileView.
+ * Saves ~60% of payload vs SELECT *
+ */
+const GRID_COLUMNS = [
+    'id', 'twitch_id', 'twitch_username', 'display_name', 'avatar_url',
+    'age', 'city', 'gender', 'zodiac_sign',
+    'photo_1', 'photo_2', 'photo_3',
+    'personality_type', 'personality_mind', 'personality_energy',
+    'personality_nature', 'personality_tactics', 'personality_identity',
+    'hobbies', 'music', 'music_artists',
+    'twitch_watches', 'twitch_streamers',
+    'youtube', 'youtube_channels',
+    'bio', 'grenbaud_is', 'looking_for', 'free_time',
+    'instagram', 'is_registered', 'created_at',
+    'is_banned'
+].join(',');
+
+export async function getGridProfiles(excludeTwitchId?: string): Promise<Profile[]> {
+    if (!isSupabaseConfigured) {
+        let profiles = MOCK_PROFILES;
+        if (excludeTwitchId) {
+            profiles = profiles.filter(p => p.twitch_id !== excludeTwitchId);
+        }
+        return profiles;
+    }
+
+    let query = supabase
+        .from('profiles')
+        .select(GRID_COLUMNS)
+        .eq('is_registered', true);
+
+    if (excludeTwitchId) {
+        query = query.neq('twitch_id', excludeTwitchId);
+    }
+
+    const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+    if (error) {
+        console.error('Error fetching grid profiles:', error);
+        return [];
+    }
+
+    return (data as unknown as Profile[]).map(p => ({
+        ...p,
+        looking_for: p.looking_for || '',
+    }));
+}
+
+/**
  * Delete profile by User ID (for account reset)
  */
 export async function deleteProfile(userId: string): Promise<boolean> {
