@@ -32,8 +32,9 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
 
     // True DB pagination
     const PAGE_SIZE = 30;
-    const [dbPage, setDbPage] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
+    const dbPageRef = useRef(0);
+    const hasMoreRef = useRef(true);
+    const loadingMoreRef = useRef(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -74,8 +75,9 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                 ]);
                 setProfiles(data);
                 setTotalCount(count);
-                setHasMore(data.length >= PAGE_SIZE);
-                setDbPage(1);
+                const more = data.length >= PAGE_SIZE;
+                hasMoreRef.current = more;
+                dbPageRef.current = 1;
             } catch (err) {
                 console.error('Error loading grid:', err);
             } finally {
@@ -115,25 +117,34 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         return () => { supabase.removeChannel(channel); };
     }, [currentUser.twitch_id]);
 
-    // Load more pages on scroll
+    // Load more — uses refs to avoid stale closures
     const loadMore = useCallback(async () => {
-        if (loadingMore || !hasMore) return;
+        if (loadingMoreRef.current || !hasMoreRef.current) return;
+        loadingMoreRef.current = true;
         setLoadingMore(true);
         try {
-            const data = await getGridProfiles(currentUser.twitch_id, dbPage, PAGE_SIZE);
-            if (data.length < PAGE_SIZE) setHasMore(false);
+            const page = dbPageRef.current;
+            const data = await getGridProfiles(currentUser.twitch_id, page, PAGE_SIZE);
+            if (data.length < PAGE_SIZE) {
+                hasMoreRef.current = false;
+            }
             setProfiles(prev => {
                 const existingIds = new Set(prev.map(p => p.id));
                 const newProfiles = data.filter(p => !existingIds.has(p.id));
                 return [...prev, ...newProfiles];
             });
-            setDbPage(prev => prev + 1);
+            dbPageRef.current = page + 1;
         } catch (err) {
             console.error('Error loading more profiles:', err);
         } finally {
+            loadingMoreRef.current = false;
             setLoadingMore(false);
         }
-    }, [loadingMore, hasMore, dbPage, currentUser.twitch_id]);
+    }, [currentUser.twitch_id]);
+
+    // Keep a ref to loadMore so observer always has the latest
+    const loadMoreRef = useRef(loadMore);
+    loadMoreRef.current = loadMore;
 
     // Fetch full profile (with all photos/data) before opening detail view
     const openFullProfile = useCallback(async (slimProfile: Profile) => {
@@ -311,7 +322,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         });
     }, [profiles, mockProfiles, isDemo, searchQuery, genderFilter, ageMin, ageMax, cityFilter, cityKm, keywordFilter, affinityFilter, profileDistances, currentUser.id]);
 
-    // Infinite scroll — load more from DB
+    // Infinite scroll — stable observer, uses ref to always call latest loadMore
     useEffect(() => {
         const sentinel = sentinelRef.current;
         if (!sentinel) return;
@@ -319,15 +330,15 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    loadMore();
+                    loadMoreRef.current();
                 }
             },
-            { rootMargin: '400px' }
+            { rootMargin: '600px' }
         );
 
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, [loadMore]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const clearFilters = () => {
         // Reset drafts
@@ -581,12 +592,10 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                 })}
             </div>
 
-            {/* Infinite scroll sentinel */}
-            {(hasMore || loadingMore) && (
-                <div ref={sentinelRef} className="grid-load-more">
-                    <div className="loading-spinner" style={{ width: 24, height: 24 }} />
-                </div>
-            )}
+            {/* Infinite scroll sentinel — always in DOM for observer */}
+            <div ref={sentinelRef} className="grid-load-more" style={{ minHeight: 1 }}>
+                {loadingMore && <div className="loading-spinner" style={{ width: 24, height: 24 }} />}
+            </div>
 
             {filteredProfiles.length === 0 && (
                 <div className="grid-empty">
