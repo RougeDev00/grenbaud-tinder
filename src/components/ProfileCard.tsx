@@ -207,7 +207,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
                             zIndex: index === currentPhoto ? 2 : 1,
                             transition: 'opacity 0.2s ease-in-out'
                         }}
-                        loading="eager"
+                        loading="lazy"
                         decoding="async"
                     />
                 ))}

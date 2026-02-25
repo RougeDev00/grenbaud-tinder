@@ -160,7 +160,7 @@ export async function getAllProfiles(page: number = 0, limit: number = 20, exclu
 
     let query = supabase
         .from('profiles')
-        .select('*')
+        .select('id, twitch_id, twitch_username, display_name, photo_1, photo_2, photo_3, bio, age, city, gender, zodiac_sign, hobbies, music, music_artists, youtube, youtube_channels, twitch_watches, twitch_streamers, grenbaud_is, looking_for, personality_type, is_registered, created_at')
         .eq('is_registered', true);
 
     if (excludeTwitchId) {
