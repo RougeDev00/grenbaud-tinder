@@ -343,13 +343,22 @@ FORMATO JSON RICHIESTO:
 
             // Notify user2 that user1 spied on them
             // Check if user2 had already spied on user1 (reciprocal interest)
-            // We now check the database directly because localStorage is private to each browser/user
             const user2AlreadySpied = await checkReciprocalInterest(user1.id, user2.id);
-            const notificationType = user2AlreadySpied ? 'SPY_RECIPROCAL' : 'SPY';
 
-            createNotification(user2.id, notificationType, user1.id).catch(err =>
-                console.error(`[AI] Failed to send ${notificationType} notification:`, err)
-            );
+            if (user2AlreadySpied) {
+                // Both have generated → send SPY_RECIPROCAL to BOTH users
+                createNotification(user2.id, 'SPY_RECIPROCAL', user1.id).catch(err =>
+                    console.error('[AI] Failed to send SPY_RECIPROCAL to target:', err)
+                );
+                createNotification(user1.id, 'SPY_RECIPROCAL', user2.id).catch(err =>
+                    console.error('[AI] Failed to send SPY_RECIPROCAL to viewer:', err)
+                );
+            } else {
+                // Only user1 has generated → send SPY to user2
+                createNotification(user2.id, 'SPY', user1.id).catch(err =>
+                    console.error('[AI] Failed to send SPY notification:', err)
+                );
+            }
 
             return finalResult;
         }
