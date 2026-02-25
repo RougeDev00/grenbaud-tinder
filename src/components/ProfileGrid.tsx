@@ -322,8 +322,10 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         });
     }, [profiles, mockProfiles, isDemo, searchQuery, genderFilter, ageMin, ageMax, cityFilter, cityKm, keywordFilter, affinityFilter, profileDistances, currentUser.id]);
 
-    // Infinite scroll — stable observer, uses ref to always call latest loadMore
+    // Infinite scroll — re-create observer after loading finishes (sentinel appears)
     useEffect(() => {
+        if (loading) return; // sentinel not in DOM yet
+
         const sentinel = sentinelRef.current;
         if (!sentinel) return;
 
@@ -333,12 +335,26 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                     loadMoreRef.current();
                 }
             },
-            { rootMargin: '600px' }
+            { rootMargin: '800px' }
         );
 
         observer.observe(sentinel);
-        return () => observer.disconnect();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+        // Scroll-event fallback for trackpad/mobile
+        const handleScroll = () => {
+            const scrollY = window.scrollY + window.innerHeight;
+            const docHeight = document.documentElement.scrollHeight;
+            if (docHeight - scrollY < 1200) {
+                loadMoreRef.current();
+            }
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [loading]); // re-run when loading finishes
 
     const clearFilters = () => {
         // Reset drafts
