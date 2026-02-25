@@ -4,6 +4,7 @@ import type { Profile, Message, EventWithDetails } from '../../types';
 import { getConversations, subscribeToMessages, sendMessage } from '../../services/chatService';
 import { getProfileByTwitchId, getProfile } from '../../services/profileService';
 import { getHighScoringMatches } from '../../services/aiService';
+import { checkMutualAnalysis } from '../../services/notificationService';
 import { getUserEvents, getEventUnreadCount, markEventChatRead, subscribeToEventMessages } from '../../services/eventService';
 import EventChat from '../Events/EventChat';
 import './Inbox.css';
@@ -254,12 +255,19 @@ const Inbox: React.FC<InboxProps> = ({ currentUser, onSelectChat, refreshTrigger
     const handleSendCiao = async (profile: Profile) => {
         setSendingTo(profile.id);
         try {
+            // Verify mutual AI analysis before allowing chat
+            const isAdmin = currentUser.twitch_username?.toLowerCase() === 'grenbaud';
+            if (!isAdmin) {
+                const unlocked = await checkMutualAnalysis(currentUser.id, profile.id);
+                if (!unlocked) {
+                    alert('Devi prima generare l\'affinità AI con questo utente!');
+                    return;
+                }
+            }
             await sendMessage(currentUser.twitch_id, profile.twitch_id, 'Ciao! 👋');
-            // Remove from suggestions and reload conversations
             addDismissedId(profile.id);
             setDismissedIds(prev => [...prev, profile.id]);
             await loadConversations(true);
-            // Open the chat
             onSelectChat(profile);
         } catch (err) {
             console.error('Error sending message:', err);

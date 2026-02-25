@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Profile, Message } from '../../types';
 import { sendMessage, getMessages, subscribeToMessages, markMessagesAsRead, markConversationRead } from '../../services/chatService';
+import { checkMutualAnalysis } from '../../services/notificationService';
 import './ChatWindow.css';
 
 interface ChatWindowProps {
@@ -15,6 +16,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
+    const [chatUnlocked, setChatUnlocked] = useState<boolean | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -101,7 +103,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || chatUnlocked === false) return;
 
         const tempMsg: Message = {
             id: 'temp-' + Date.now(),
@@ -120,9 +122,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
             alert('Errore invio messaggio');
             setMessages(prev => prev.filter(m => m.id !== tempMsg.id));
         }
-        // Don't replace temp - the realtime subscription will deliver the real message
-        // and our dedup logic will handle it
     };
+
+    // Check mutual analysis on mount — block chat if not unlocked
+    useEffect(() => {
+        const isAdmin = currentUser.twitch_username?.toLowerCase() === 'grenbaud';
+        if (isAdmin) {
+            setChatUnlocked(true);
+            return;
+        }
+        checkMutualAnalysis(currentUser.id, otherUser.id).then(unlocked => {
+            setChatUnlocked(unlocked);
+        });
+    }, [currentUser.id, otherUser.id]);
 
     // Initial scroll
     useEffect(() => {
@@ -332,17 +344,31 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
 
                 {/* Input Area */}
                 <form className="chat-input-area" onSubmit={handleSend}>
-                    <input
-                        type="text"
-                        className="chat-input"
-                        placeholder="Scrivi un messaggio..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        required
-                    />
-                    <button type="submit" className="chat-send-btn" disabled={!newMessage.trim()}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    </button>
+                    {chatUnlocked === false ? (
+                        <div style={{
+                            width: '100%',
+                            textAlign: 'center',
+                            padding: '12px',
+                            color: 'rgba(255,255,255,0.5)',
+                            fontSize: '0.85rem',
+                        }}>
+                            🔒 Genera l'affinità AI per sbloccare la chat
+                        </div>
+                    ) : (
+                        <>
+                            <input
+                                type="text"
+                                className="chat-input"
+                                placeholder="Scrivi un messaggio..."
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                required
+                            />
+                            <button type="submit" className="chat-send-btn" disabled={!newMessage.trim()}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </>
+                    )}
                 </form>
             </div>
         </div>
