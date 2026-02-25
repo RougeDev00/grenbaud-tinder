@@ -372,7 +372,6 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         );
     }
 
-    const sourceProfiles = isDemo ? mockProfiles : profiles;
     const title = isDemo ? `Demo Mode` : `Scopri Tutti`;
 
     return (
