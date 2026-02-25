@@ -3,7 +3,7 @@ import type { Profile, EsploraPostWithProfile } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteProfile, updateProfile } from '../services/profileService';
 import { getUserPosts } from '../services/esploraService';
-import { generatePersonalityAnalysis } from '../services/aiService';
+import { generatePersonalityAnalysis, generateProfileSummary } from '../services/aiService';
 import { checkMutualAnalysis } from '../services/notificationService';
 import { compressImage } from '../utils/imageUtils';
 import { getCroppedImg } from '../utils/cropUtils';
@@ -113,6 +113,8 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
     const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
     const [isPersonalityExpanded, setIsPersonalityExpanded] = useState(true);
     const [isChatUnlocked, setIsChatUnlocked] = useState(false);
+    const [showRegenPopup, setShowRegenPopup] = useState(false);
+    const [regenerating, setRegenerating] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'posts'>('profile');
     const [userPosts, setUserPosts] = useState<EsploraPostWithProfile[]>([]);
     const [loadingPosts, setLoadingPosts] = useState(false);
@@ -359,7 +361,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
                 }
                 setPhotoFiles([null, null, null]);
                 setIsEditing(false);
-                alert('✅ Profilo aggiornato!');
+                setShowRegenPopup(true);
             } else {
                 alert('❌ Errore nel salvataggio. Riprova.');
             }
@@ -961,6 +963,110 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
                     )
                 }
             </div>
+
+            {/* ── AI Summary Regeneration Popup ── */}
+            {showRegenPopup && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 10000,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    animation: 'fadeIn 0.3s ease',
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(145deg, rgba(30,20,50,0.95), rgba(15,10,30,0.98))',
+                        border: '1px solid rgba(139,92,246,0.3)',
+                        borderRadius: '24px', padding: '32px', maxWidth: '360px', width: '90%',
+                        boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(139,92,246,0.15)',
+                        textAlign: 'center',
+                    }}>
+                        <div style={{
+                            width: '64px', height: '64px', borderRadius: '20px',
+                            background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '1.8rem', margin: '0 auto 16px',
+                            boxShadow: '0 8px 24px rgba(124,58,237,0.4)',
+                        }}>
+                            {regenerating ? '⏳' : '🧠'}
+                        </div>
+                        <h3 style={{
+                            color: 'white', fontSize: '1.2rem', fontWeight: 800,
+                            fontFamily: 'Outfit, sans-serif', margin: '0 0 8px',
+                        }}>
+                            {regenerating ? 'Rigenerazione in corso...' : 'Profilo aggiornato! ✅'}
+                        </h3>
+                        <p style={{
+                            color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem',
+                            lineHeight: 1.5, margin: '0 0 24px',
+                        }}>
+                            {regenerating
+                                ? 'L\'AI sta riscrivendo il tuo riassunto con le nuove informazioni...'
+                                : 'Vuoi rigenerare il riassunto AI con le nuove informazioni?'}
+                        </p>
+
+                        {regenerating ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px' }}>
+                                <div className="spinner" />
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                                <button
+                                    onClick={() => setShowRegenPopup(false)}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.06)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '14px', padding: '12px 20px',
+                                        color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem',
+                                        fontWeight: 600, cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                    }}
+                                >
+                                    No, va bene così
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        setRegenerating(true);
+                                        try {
+                                            const summary = await generateProfileSummary(profile);
+                                            if (summary && session) {
+                                                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                                                const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                                                await fetch(
+                                                    `${supabaseUrl}/rest/v1/profiles?id=eq.${profile.id}`,
+                                                    {
+                                                        method: 'PATCH',
+                                                        headers: {
+                                                            'apikey': supabaseKey,
+                                                            'Authorization': `Bearer ${session.access_token}`,
+                                                            'Content-Type': 'application/json',
+                                                        },
+                                                        body: JSON.stringify({ ai_summary: summary }),
+                                                    }
+                                                );
+                                                setProfile(prev => ({ ...prev, ai_summary: summary }));
+                                            }
+                                        } catch (err) {
+                                            console.error('[AI] Error regenerating summary:', err);
+                                        } finally {
+                                            setRegenerating(false);
+                                            setShowRegenPopup(false);
+                                        }
+                                    }}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                                        border: 'none', borderRadius: '14px', padding: '12px 20px',
+                                        color: 'white', fontSize: '0.9rem', fontWeight: 700,
+                                        cursor: 'pointer', transition: 'all 0.2s',
+                                        boxShadow: '0 4px 16px rgba(124,58,237,0.4)',
+                                    }}
+                                >
+                                    Sì, rigenera 🧠
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

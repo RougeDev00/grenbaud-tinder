@@ -180,16 +180,32 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     // Handle deep linking from SPY notifications
     useEffect(() => {
         const profileId = searchParams.get('profile');
-        if (profileId) {
+        if (!profileId) return;
+
+        const openDeepLinkedProfile = async () => {
+            // Try loaded profiles first
             const source = isDemo ? mockProfiles : profiles;
-            const target = source.find(p => p.id === profileId);
+            let target = source.find(p => p.id === profileId);
+
+            // If not in loaded list, fetch directly from DB
+            if (!target && !isDemo) {
+                try {
+                    const fetched = await getProfile(profileId);
+                    if (fetched) target = fetched;
+                } catch (err) {
+                    console.error('Error fetching deep-linked profile:', err);
+                }
+            }
+
             if (target) {
                 openFullProfile(target);
-                // Clear the parameter so going back doesn't immediately reopen it
-                searchParams.delete('profile');
-                setSearchParams(searchParams, { replace: true });
             }
-        }
+            // Clear the parameter
+            searchParams.delete('profile');
+            setSearchParams(searchParams, { replace: true });
+        };
+
+        openDeepLinkedProfile();
     }, [searchParams, profiles, mockProfiles, isDemo, setSearchParams, openFullProfile]);
 
     // Geocode when applied city filter changes

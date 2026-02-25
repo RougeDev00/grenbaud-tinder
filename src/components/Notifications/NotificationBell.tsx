@@ -121,9 +121,7 @@ export const NotificationBell: React.FC = () => {
         switch (notif.type) {
             case 'SPY':
             case 'SPY_RECIPROCAL':
-                if (notif.type === 'SPY_RECIPROCAL' && notif.actor_id) {
-                    navigate('/messages', { state: { openChatId: notif.actor_id } });
-                } else if (notif.actor_id) {
+                if (notif.actor_id) {
                     navigate(`/?profile=${notif.actor_id}`);
                 } else {
                     navigate('/');
