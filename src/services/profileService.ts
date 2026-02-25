@@ -237,6 +237,45 @@ export async function getGridProfiles(
 }
 
 /**
+ * Get total count of registered profiles (for grid header)
+ */
+export async function getTotalProfileCount(excludeTwitchId?: string): Promise<number> {
+    if (!isSupabaseConfigured) return MOCK_PROFILES.length;
+
+    let query = supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_registered', true);
+
+    if (excludeTwitchId) {
+        query = query.neq('twitch_id', excludeTwitchId);
+    }
+
+    const { count, error } = await query;
+    if (error) {
+        console.error('Error fetching profile count:', error);
+        return 0;
+    }
+    return count || 0;
+}
+
+/**
+ * Lazy-load photo_2 and photo_3 for a single profile (called on photo swipe)
+ */
+export async function getProfilePhotos(profileId: string): Promise<{ photo_2: string | null; photo_3: string | null }> {
+    if (!isSupabaseConfigured) return { photo_2: null, photo_3: null };
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('photo_2, photo_3')
+        .eq('id', profileId)
+        .single();
+
+    if (error || !data) return { photo_2: null, photo_3: null };
+    return { photo_2: data.photo_2 || null, photo_3: data.photo_3 || null };
+}
+
+/**
  * Delete profile by User ID (for account reset)
  */
 export async function deleteProfile(userId: string): Promise<boolean> {

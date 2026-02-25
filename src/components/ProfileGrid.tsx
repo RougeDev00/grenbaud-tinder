@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Profile } from '../types';
-import { getGridProfiles } from '../services/profileService';
+import { getGridProfiles, getTotalProfileCount } from '../services/profileService';
+import { supabase } from '../lib/supabase';
 import { generateMockProfiles } from '../lib/mockData';
 import { geocodeCity, haversineDistance } from '../utils/geo';
 import { getCompatibilityCacheKey } from '../services/aiService';
@@ -59,13 +60,20 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     // Geo distance state
     const [profileDistances, setProfileDistances] = useState<Map<string, number>>(new Map());
 
-    // Load first page
+    // Total count from DB
+    const [totalCount, setTotalCount] = useState<number>(0);
+
+    // Load first page + total count
     useEffect(() => {
         const fetchProfiles = async () => {
             setLoading(true);
             try {
-                const data = await getGridProfiles(currentUser.twitch_id, 0, PAGE_SIZE);
+                const [data, count] = await Promise.all([
+                    getGridProfiles(currentUser.twitch_id, 0, PAGE_SIZE),
+                    getTotalProfileCount(currentUser.twitch_id)
+                ]);
                 setProfiles(data);
+                setTotalCount(count);
                 setHasMore(data.length >= PAGE_SIZE);
                 setDbPage(1);
             } catch (err) {
@@ -75,6 +83,36 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
             }
         };
         fetchProfiles();
+    }, [currentUser.twitch_id]);
+
+    // Realtime: listen for new/updated profiles to keep cache fresh
+    useEffect(() => {
+        const channel = supabase
+            .channel('grid-profiles-realtime')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'profiles',
+                filter: 'is_registered=eq.true'
+            }, (payload: any) => {
+                if (payload.eventType === 'INSERT') {
+                    const newProfile = payload.new as Profile;
+                    if (newProfile.twitch_id !== currentUser.twitch_id) {
+                        setProfiles(prev => [newProfile, ...prev]);
+                        setTotalCount(prev => prev + 1);
+                    }
+                } else if (payload.eventType === 'UPDATE') {
+                    const updated = payload.new as Profile;
+                    setProfiles(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p));
+                } else if (payload.eventType === 'DELETE') {
+                    const deleted = payload.old as { id: string };
+                    setProfiles(prev => prev.filter(p => p.id !== deleted.id));
+                    setTotalCount(prev => Math.max(0, prev - 1));
+                }
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
     }, [currentUser.twitch_id]);
 
     // Load more pages on scroll
@@ -503,8 +541,8 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
             {/* Results count */}
             <div className="grid-results-count">
                 {filteredProfiles.length} {filteredProfiles.length === 1 ? 'profilo' : 'profili'}
-                {(searchQuery || activeFilterCount > 0) && (
-                    <span> su {sourceProfiles.length}</span>
+                {totalCount > 0 && (
+                    <span> su {totalCount}</span>
                 )}
             </div>
 
