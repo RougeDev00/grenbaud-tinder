@@ -495,6 +495,17 @@
 }
 
 /* ============================== */
+/* LOAD MORE (Infinite Scroll)    */
+/* ============================== */
+
+.grid-load-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 0;
+}
+
+/* ============================== */
 /* BACK BUTTON & DETAIL VIEW      */
 /* ============================== */
 

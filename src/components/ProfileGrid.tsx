@@ -29,6 +29,11 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     const gridRef = useRef<HTMLDivElement>(null);
     const [columns, setColumns] = useState(5);
 
+    // Infinite scroll: render profiles progressively
+    const BATCH_SIZE = 20;
+    const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+    const sentinelRef = useRef<HTMLDivElement>(null);
+
     // Draft filter state (what user edits in the panel)
     const [searchQuery, setSearchQuery] = useState('');
     const [filtersOpen, setFiltersOpen] = useState(false);
@@ -236,6 +241,29 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
             return true;
         });
     }, [profiles, mockProfiles, isDemo, searchQuery, genderFilter, ageMin, ageMax, cityFilter, cityKm, keywordFilter, affinityFilter, profileDistances, currentUser.id]);
+
+    // Infinite scroll observer
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setVisibleCount(prev => prev + BATCH_SIZE);
+                }
+            },
+            { rootMargin: '400px' }
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [filteredProfiles.length]);
+
+    // Reset visible count when filters change
+    useEffect(() => {
+        setVisibleCount(BATCH_SIZE);
+    }, [searchQuery, genderFilter, ageMin, ageMax, cityFilter, keywordFilter, affinityFilter]);
 
     const clearFilters = () => {
         // Reset drafts
@@ -463,7 +491,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
 
             {/* Grid */}
             <div className="profile-grid" ref={gridRef}>
-                {filteredProfiles.map((profile, index) => {
+                {filteredProfiles.slice(0, visibleCount).map((profile, index) => {
                     const colIndex = index % columns;
                     const isLeftHalf = colIndex < columns / 2;
                     const slideDir = isLeftHalf ? 1 : -1;
@@ -489,6 +517,13 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                     );
                 })}
             </div>
+
+            {/* Infinite scroll sentinel */}
+            {visibleCount < filteredProfiles.length && (
+                <div ref={sentinelRef} className="grid-load-more">
+                    <div className="loading-spinner" style={{ width: 24, height: 24 }} />
+                </div>
+            )}
 
             {filteredProfiles.length === 0 && (
                 <div className="grid-empty">
