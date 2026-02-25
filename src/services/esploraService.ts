@@ -249,7 +249,7 @@ export const toggleEsploraLike = async (
     posY?: number
 ): Promise<boolean | null> => {
     try {
-        // Use atomic RPC for toggle + count update (SECURITY DEFINER, bypasses RLS)
+        // RPC handles: toggle like, update count, AND send notification (all SECURITY DEFINER)
         const { data: isNowLiked, error: rpcError } = await supabase
             .rpc('toggle_esplora_like', { p_post_id: postId, p_user_id: userId });
 
@@ -258,32 +258,12 @@ export const toggleEsploraLike = async (
             return null;
         }
 
-        // If we just liked, update pin position and send notification
-        if (isNowLiked) {
-            // Update pin coordinates if provided
-            if (posX !== undefined || posY !== undefined) {
-                await supabase.from('esplora_likes')
-                    .update({ pos_x: posX ?? 50, pos_y: posY ?? 90 })
-                    .eq('post_id', postId)
-                    .eq('user_id', userId);
-            }
-
-            // Send notification to post owner
-            const { data: post } = await supabase.from('esplora_posts').select('user_id').eq('id', postId).single();
-            if (post?.user_id && post.user_id !== userId) {
-                const { createNotification } = await import('./notificationService');
-                const { supabase: sb } = await import('../lib/supabase');
-                const { count } = await sb
-                    .from('notifications')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('user_id', post.user_id)
-                    .eq('actor_id', userId)
-                    .eq('type', 'ESPLORA_LIKE')
-                    .eq('reference_id', postId);
-                if (!count || count === 0) {
-                    await createNotification(post.user_id, 'ESPLORA_LIKE', userId, postId);
-                }
-            }
+        // Update pin coordinates if provided (and we just liked)
+        if (isNowLiked && (posX !== undefined || posY !== undefined)) {
+            await supabase.from('esplora_likes')
+                .update({ pos_x: posX ?? 50, pos_y: posY ?? 90 })
+                .eq('post_id', postId)
+                .eq('user_id', userId);
         }
 
         return isNowLiked;
