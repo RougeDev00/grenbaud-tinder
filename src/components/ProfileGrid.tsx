@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Profile } from '../types';
-import { getGridProfiles, getTotalProfileCount, getProfile } from '../services/profileService';
+import { getGridProfiles, getTotalProfileCount, getProfile, searchGridProfiles } from '../services/profileService';
 import { supabase } from '../lib/supabase';
 import { generateMockProfiles } from '../lib/mockData';
 import { geocodeCity, haversineDistance } from '../utils/geo';
@@ -280,6 +280,43 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         }
     };
 
+    // ── Server-side search when filters or search are active ──
+    const [searchResults, setSearchResults] = useState<Profile[] | null>(null);
+    const [searching, setSearching] = useState(false);
+
+    const hasActiveFilters = searchQuery.trim() !== '' ||
+        genderFilter !== 'all' || ageMin !== '' || ageMax !== '' ||
+        cityFilter !== '' || keywordFilter !== '' || affinityFilter !== 'all';
+
+    useEffect(() => {
+        if (!hasActiveFilters) {
+            setSearchResults(null);
+            return;
+        }
+
+        // Debounce for search query
+        const timer = setTimeout(async () => {
+            setSearching(true);
+            try {
+                const results = await searchGridProfiles(currentUser.twitch_id, {
+                    search: searchQuery.trim() || undefined,
+                    gender: genderFilter !== 'all' ? genderFilter : undefined,
+                    ageMin: ageMin ? parseInt(ageMin) : undefined,
+                    ageMax: ageMax ? parseInt(ageMax) : undefined,
+                    city: cityFilter.trim() || undefined,
+                    keyword: keywordFilter.trim() || undefined,
+                });
+                setSearchResults(results);
+            } catch (err) {
+                console.error('Error in server-side search:', err);
+            } finally {
+                setSearching(false);
+            }
+        }, searchQuery.trim() ? 300 : 0); // debounce only for text search
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, genderFilter, ageMin, ageMax, cityFilter, keywordFilter, currentUser.twitch_id, hasActiveFilters]);
+
     // Count active APPLIED filters
     const activeFilterCount = useMemo(() => {
         let count = 0;
@@ -295,71 +332,31 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     // Check if drafts differ from applied
 
 
-    // Apply filters (uses applied state, not draft)
+    // Apply filters — use server results when filters active, else paginated profiles
     const filteredProfiles = useMemo(() => {
-        const source = isDemo ? mockProfiles : profiles;
-        const query = searchQuery.toLowerCase().trim();
+        // When filters are active and we have server results, use those
+        const source = hasActiveFilters && searchResults !== null
+            ? searchResults
+            : (isDemo ? mockProfiles : profiles);
 
         return source.filter(p => {
-            // Username search (real-time, always active)
-            if (query) {
-                const matchesUsername = p.twitch_username?.toLowerCase().includes(query)
-                    || p.display_name?.toLowerCase().includes(query);
-                if (!matchesUsername) return false;
-            }
-
-            // Gender filter (applied)
-            if (genderFilter !== 'all') {
-                const pGender = (p.gender || '').toUpperCase();
-                if (genderFilter === 'M' && pGender !== 'M' && pGender !== 'MASCHIO') return false;
-                if (genderFilter === 'F' && pGender !== 'F' && pGender !== 'FEMMINA') return false;
-                if (genderFilter === 'NS' && pGender !== '' && pGender !== 'NS' && pGender !== 'NON SPECIFICATO') return false;
-            }
-
-            // Affinity type filter
+            // Affinity type filter (client-side only — needs confirmedIds)
             if (affinityFilter !== 'all') {
                 const isConfirmed = confirmedIds.has(p.id);
                 if (affinityFilter === 'confirmed' && !isConfirmed) return false;
                 if (affinityFilter === 'estimated' && isConfirmed) return false;
             }
 
-            // Age range
-            if (ageMin || ageMax) {
-                const age = p.age || 0;
-                if (ageMin && age < parseInt(ageMin)) return false;
-                if (ageMax && age > parseInt(ageMax)) return false;
-            }
-
-            // City / Distance filter
-            if (cityFilter.trim()) {
+            // City / Distance filter (client-side for geo distance)
+            if (cityFilter.trim() && profileDistances.size > 0) {
                 const kmMax = parseInt(cityKm) || 50;
                 const dist = profileDistances.get(p.id);
-                // If we have distance data, use it; otherwise fallback to text match
-                if (profileDistances.size > 0) {
-                    if (dist === undefined || dist > kmMax) return false;
-                } else {
-                    // No geo data yet — fallback to text match
-                    const pCity = (p.city || '').toLowerCase();
-                    if (!pCity.includes(cityFilter.toLowerCase().trim())) return false;
-                }
-            }
-
-            // Keyword filter (searches across hobby, music, streamers, bio, etc.)
-            if (keywordFilter) {
-                const kw = keywordFilter.toLowerCase().trim();
-                const searchableText = [
-                    p.hobbies, p.music, p.music_artists,
-                    p.twitch_watches, p.twitch_streamers,
-                    p.youtube, p.youtube_channels,
-                    p.bio, p.grenbaud_is, p.looking_for
-                ].filter(Boolean).join(' ').toLowerCase();
-
-                if (!searchableText.includes(kw)) return false;
+                if (dist === undefined || dist > kmMax) return false;
             }
 
             return true;
         });
-    }, [profiles, mockProfiles, isDemo, searchQuery, genderFilter, ageMin, ageMax, cityFilter, cityKm, keywordFilter, affinityFilter, profileDistances, currentUser.id]);
+    }, [profiles, mockProfiles, isDemo, searchResults, hasActiveFilters, genderFilter, ageMin, ageMax, cityFilter, cityKm, keywordFilter, affinityFilter, profileDistances, confirmedIds, currentUser.id, searchQuery]);
 
     // Infinite scroll — re-create observer after loading finishes (sentinel appears)
     useEffect(() => {

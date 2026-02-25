@@ -260,6 +260,88 @@ export async function getTotalProfileCount(excludeTwitchId?: string): Promise<nu
 }
 
 /**
+ * Server-side filtered search — queries ALL matching profiles from DB.
+ * Used when any filter is active so results aren't limited to loaded pages.
+ */
+export interface GridFilters {
+    search?: string;
+    gender?: string;
+    ageMin?: number;
+    ageMax?: number;
+    city?: string;
+    keyword?: string;
+}
+
+export async function searchGridProfiles(
+    excludeTwitchId?: string,
+    filters: GridFilters = {}
+): Promise<Profile[]> {
+    if (!isSupabaseConfigured) return [];
+
+    let query = supabase
+        .from('profiles')
+        .select(GRID_COLUMNS)
+        .eq('is_registered', true);
+
+    if (excludeTwitchId) {
+        query = query.neq('twitch_id', excludeTwitchId);
+    }
+
+    // Username / display name search
+    if (filters.search) {
+        const s = `%${filters.search}%`;
+        query = query.or(`twitch_username.ilike.${s},display_name.ilike.${s}`);
+    }
+
+    // Gender filter
+    if (filters.gender) {
+        if (filters.gender === 'M') {
+            query = query.or('gender.ilike.M,gender.ilike.Maschio');
+        } else if (filters.gender === 'F') {
+            query = query.or('gender.ilike.F,gender.ilike.Femmina');
+        }
+        // NS handled client-side (empty or "Non specificato")
+    }
+
+    // Age range
+    if (filters.ageMin) {
+        query = query.gte('age', filters.ageMin);
+    }
+    if (filters.ageMax) {
+        query = query.lte('age', filters.ageMax);
+    }
+
+    // City text match
+    if (filters.city) {
+        query = query.ilike('city', `%${filters.city}%`);
+    }
+
+    // Keyword search across multiple text fields
+    if (filters.keyword) {
+        const k = `%${filters.keyword}%`;
+        query = query.or(
+            `hobbies.ilike.${k},music.ilike.${k},music_artists.ilike.${k},` +
+            `twitch_streamers.ilike.${k},youtube_channels.ilike.${k},` +
+            `bio.ilike.${k},looking_for.ilike.${k}`
+        );
+    }
+
+    const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(500); // safety cap
+
+    if (error) {
+        console.error('Error searching grid profiles:', error);
+        return [];
+    }
+
+    return (data as unknown as Profile[]).map(p => ({
+        ...p,
+        looking_for: p.looking_for || '',
+    }));
+}
+
+/**
  * Lazy-load photo_2 and photo_3 for a single profile (called on photo swipe)
  */
 export async function getProfilePhotos(profileId: string): Promise<{ photo_2: string | null; photo_3: string | null }> {
