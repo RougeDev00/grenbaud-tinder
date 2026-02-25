@@ -25,18 +25,17 @@ export const createNotification = async (
 ) => {
     try {
         console.log(`[NotificationService] Attempting to create: user_id=${userId}, type=${type}, actor_id=${actorId}`);
-        const { error } = await supabase
-            .from('notifications')
-            .insert({
-                user_id: userId,
-                actor_id: actorId || null,
-                type,
-                reference_id: referenceId || null
-            })
-            .select();
+
+        // Use SECURITY DEFINER RPC to bypass RLS
+        const { error } = await supabase.rpc('create_notification', {
+            p_user_id: userId,
+            p_type: type,
+            p_actor_id: actorId || null,
+            p_reference_id: referenceId || null
+        });
 
         if (error) {
-            console.error('[NotificationService] Supabase insert error:', error);
+            console.error('[NotificationService] RPC error:', error);
             throw error;
         }
 
