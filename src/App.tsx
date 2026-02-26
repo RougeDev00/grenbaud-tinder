@@ -6,7 +6,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Landing from './components/Landing';
 import Registration from './components/Registration';
 import ProfileGrid from './components/ProfileGrid';
-import { checkGrenbaudSubscription } from './services/twitchService';
+// TEMPORARILY DISABLED — re-enable with sub check
+// import { checkGrenbaudSubscription } from './services/twitchService';
 
 import EventList from './components/Events/EventList';
 import EventDetailsPage from './components/Events/EventDetailsPage';
@@ -42,17 +43,18 @@ const AppContent: React.FC = () => {
   const [subCheckStatus, setSubCheckStatus] = useState<'idle' | 'checking' | 'subscribed' | 'not_subscribed'>('idle');
 
   // Check Twitch subscription for new users (no profile yet)
+  // ⚠️ TEMPORARILY DISABLED — re-enable by uncommenting the original logic below
   useEffect(() => {
     if (!isAuthenticated || !user) return;
-    // If profile exists and is registered → existing user, skip
     if (profile && profile.is_registered) return;
-    // If already checked, skip
     if (subCheckStatus !== 'idle') return;
+    // Skip sub check — allow everyone to register
+    setSubCheckStatus('subscribed');
 
+    /* ORIGINAL LOGIC — uncomment to re-enable sub check:
     const checkSub = async () => {
       setSubCheckStatus('checking');
 
-      // Broadcaster whitelist — always allow grenbaud (channel owner)
       const twitchUsername = user.user_metadata?.user_name?.toLowerCase()
         || user.user_metadata?.preferred_username?.toLowerCase()
         || '';
@@ -77,6 +79,7 @@ const AppContent: React.FC = () => {
       }
     };
     checkSub();
+    */
   }, [isAuthenticated, user, profile, providerToken, subCheckStatus]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [inboxRefreshTrigger, setInboxRefreshTrigger] = useState(0);

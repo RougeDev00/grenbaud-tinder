@@ -106,6 +106,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
                     <option value="Nuove Amicizie">Nuove Amicizie</option>
                     <option value="Compagni di Giochi">Compagni di Giochi</option>
                     <option value="Due Chiacchiere">Due Chiacchiere</option>
+                    <option value="Trovare l'Amore">Trovare l'Amore</option>
                 </select>
             </div>
             <div className="edit-field">

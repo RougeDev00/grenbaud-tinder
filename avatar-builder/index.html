@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Avatar Builder — Baudr</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app">
+        <h1>🎮 Crea il tuo Avatar</h1>
+        <p class="sub">Full body • Head to toe • Il tuo stile</p>
+        <div class="builder">
+            <div class="preview">
+                <div class="avatar-frame"><svg id="avatarSvg" viewBox="0 0 260 460"></svg></div>
+                <div class="btn-row">
+                    <button class="btn-action btn-rand" onclick="randomize()">🎲 Random</button>
+                    <button class="btn-action btn-save" onclick="exportAvatar()">💾 Salva PNG</button>
+                </div>
+            </div>
+            <div class="controls">
+                <div class="tabs" id="tabs"></div>
+                <div id="panels"></div>
+            </div>
+        </div>
+    </div>
+    <script src="avatar.js"></script>
+</body>
+
+</html>
