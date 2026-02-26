@@ -7,7 +7,7 @@ import Landing from './components/Landing';
 import Registration from './components/Registration';
 import ProfileGrid from './components/ProfileGrid';
 // TEMPORARILY DISABLED — re-enable with sub check
-// import { checkGrenbaudSubscription } from './services/twitchService';
+import { checkGrenbaudSubscription } from './services/twitchService';
 
 import EventList from './components/Events/EventList';
 import EventDetailsPage from './components/Events/EventDetailsPage';
@@ -44,23 +44,22 @@ const AppContent: React.FC = () => {
   const [subCheckStatus, setSubCheckStatus] = useState<'idle' | 'checking' | 'subscribed' | 'not_subscribed'>('idle');
 
   // Check Twitch subscription for new users (no profile yet)
-  // ⚠️ TEMPORARILY DISABLED — re-enable by uncommenting the original logic below
   useEffect(() => {
     if (!isAuthenticated || !user) return;
     if (profile && profile.is_registered) return;
     if (subCheckStatus !== 'idle') return;
-    // Skip sub check — allow everyone to register
-    setSubCheckStatus('subscribed');
 
-    /* ORIGINAL LOGIC — uncomment to re-enable sub check:
     const checkSub = async () => {
       setSubCheckStatus('checking');
 
       const twitchUsername = user.user_metadata?.user_name?.toLowerCase()
         || user.user_metadata?.preferred_username?.toLowerCase()
         || '';
-      if (twitchUsername === 'grenbaud') {
-        console.log('[SubCheck] Broadcaster whitelisted:', twitchUsername);
+
+      // Whitelist — these users bypass the sub check
+      const WHITELIST = ['grenbaud', 'edo4rdo_g'];
+      if (WHITELIST.includes(twitchUsername)) {
+        console.log('[SubCheck] Whitelisted:', twitchUsername);
         setSubCheckStatus('subscribed');
         return;
       }
@@ -80,7 +79,6 @@ const AppContent: React.FC = () => {
       }
     };
     checkSub();
-    */
   }, [isAuthenticated, user, profile, providerToken, subCheckStatus]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [inboxRefreshTrigger, setInboxRefreshTrigger] = useState(0);
