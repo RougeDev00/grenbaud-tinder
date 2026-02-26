@@ -5,6 +5,8 @@ import { getGridProfiles, getTotalProfileCount, getProfile, searchGridProfiles }
 import { supabase } from '../lib/supabase';
 import { generateMockProfiles } from '../lib/mockData';
 import { geocodeCity, haversineDistance } from '../utils/geo';
+import { calculateCompatibility } from '../utils/compatibility';
+import { getCompatibilityCacheKey, getCachedCompatibility } from '../services/aiService';
 
 import ProfileCard from './ProfileCard';
 import ProfileView from './ProfileView';
@@ -17,6 +19,70 @@ interface ProfileGridProps {
 
 type GenderFilter = 'all' | 'M' | 'F' | 'NS';
 type AffinityType = 'all' | 'confirmed' | 'estimated';
+
+/**
+ * LazyCard — renders a ProfileCard only when near the viewport using IntersectionObserver.
+ * Cards far from viewport show a lightweight placeholder instead.
+ */
+const LazyCard: React.FC<{
+    profile: Profile;
+    currentUser: Profile;
+    matchScore: number | null;
+    isEstimated: boolean;
+    onOpenProfile: () => void;
+    index: number;
+    skipAnimation: boolean;
+    columns: number;
+}> = React.memo(({ profile, currentUser, matchScore, isEstimated, onOpenProfile, index, skipAnimation, columns }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    observer.disconnect(); // Once visible, stay rendered
+                }
+            },
+            { rootMargin: '600px' } // Start loading 600px before visible
+        );
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    const colIndex = index % columns;
+    const isLeftHalf = colIndex < columns / 2;
+    const slideDir = isLeftHalf ? 1 : -1;
+
+    return (
+        <div
+            ref={ref}
+            className={`grid-card-wrapper ${skipAnimation ? 'grid-card-no-anim' : ''}`}
+            style={skipAnimation ? undefined : {
+                '--animation-order': index,
+                '--slide-dir': slideDir,
+                'animationDelay': `${Math.min(index * 0.04, 0.8)}s`
+            } as React.CSSProperties}
+        >
+            {isVisible ? (
+                <ProfileCard
+                    profile={profile}
+                    currentUser={currentUser}
+                    onOpenProfile={onOpenProfile}
+                    matchScore={matchScore}
+                    isEstimated={isEstimated}
+                />
+            ) : (
+                <div className="grid-card-placeholder" />
+            )}
+        </div>
+    );
+});
 
 const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -37,6 +103,9 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     const loadingMoreRef = useRef(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
+
+    // Track how many cards have been initially loaded (to skip animation for later ones)
+    const initialLoadCountRef = useRef(0);
 
     // Draft filter state (what user edits in the panel)
     const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +136,29 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
     // Total count from DB
     const [totalCount, setTotalCount] = useState<number>(0);
 
+    // ── Batch compatibility scores ──
+    // Pre-compute all scores once and pass to cards as props
+    const compatibilityScores = useMemo(() => {
+        const source = isDemo ? mockProfiles : profiles;
+        const scores = new Map<string, { score: number; isEstimated: boolean }>();
+
+        for (const profile of source) {
+            // Check local storage cache first (AI-confirmed)
+            const cacheKey = getCompatibilityCacheKey(currentUser.id, profile.id);
+            const cached = getCachedCompatibility(cacheKey);
+
+            if (cached) {
+                scores.set(profile.id, { score: cached.score, isEstimated: false });
+            } else {
+                // Calculate estimated score
+                const estimated = calculateCompatibility(currentUser, profile);
+                scores.set(profile.id, { score: estimated, isEstimated: true });
+            }
+        }
+
+        return scores;
+    }, [profiles, mockProfiles, isDemo, currentUser]);
+
     // Load first page + total count
     useEffect(() => {
         const fetchProfiles = async () => {
@@ -78,6 +170,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                 ]);
                 setProfiles(data);
                 setTotalCount(count);
+                initialLoadCountRef.current = data.length;
                 const more = data.length >= PAGE_SIZE;
                 hasMoreRef.current = more;
                 dbPageRef.current = 1;
@@ -111,8 +204,46 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
         fetchConfirmed();
     }, [currentUser.twitch_id]);
 
-    // Realtime: listen for new/updated profiles to keep cache fresh
+    // Realtime: listen for new/updated profiles — THROTTLED to batch updates
     useEffect(() => {
+        let pendingUpdates: any[] = [];
+        let flushTimer: number | null = null;
+
+        const flushUpdates = () => {
+            if (pendingUpdates.length === 0) return;
+
+            const updates = [...pendingUpdates];
+            pendingUpdates = [];
+
+            setProfiles(prev => {
+                let next = [...prev];
+                for (const payload of updates) {
+                    if (payload.eventType === 'INSERT') {
+                        const newProfile = payload.new as Profile;
+                        if (newProfile.twitch_id !== currentUser.twitch_id) {
+                            if (!next.some(p => p.id === newProfile.id)) {
+                                next = [newProfile, ...next];
+                            }
+                        }
+                    } else if (payload.eventType === 'UPDATE') {
+                        const updated = payload.new as Profile;
+                        next = next.map(p => p.id === updated.id ? { ...p, ...updated } : p);
+                    } else if (payload.eventType === 'DELETE') {
+                        const deleted = payload.old as { id: string };
+                        next = next.filter(p => p.id !== deleted.id);
+                    }
+                }
+                return next;
+            });
+
+            // Update total count
+            const inserts = updates.filter(u => u.eventType === 'INSERT').length;
+            const deletes = updates.filter(u => u.eventType === 'DELETE').length;
+            if (inserts || deletes) {
+                setTotalCount(prev => Math.max(0, prev + inserts - deletes));
+            }
+        };
+
         const channel = supabase
             .channel('grid-profiles-realtime')
             .on('postgres_changes', {
@@ -121,24 +252,21 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                 table: 'profiles',
                 filter: 'is_registered=eq.true'
             }, (payload: any) => {
-                if (payload.eventType === 'INSERT') {
-                    const newProfile = payload.new as Profile;
-                    if (newProfile.twitch_id !== currentUser.twitch_id) {
-                        setProfiles(prev => [newProfile, ...prev]);
-                        setTotalCount(prev => prev + 1);
-                    }
-                } else if (payload.eventType === 'UPDATE') {
-                    const updated = payload.new as Profile;
-                    setProfiles(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p));
-                } else if (payload.eventType === 'DELETE') {
-                    const deleted = payload.old as { id: string };
-                    setProfiles(prev => prev.filter(p => p.id !== deleted.id));
-                    setTotalCount(prev => Math.max(0, prev - 1));
+                pendingUpdates.push(payload);
+                // Throttle: flush updates every 2 seconds
+                if (!flushTimer) {
+                    flushTimer = window.setTimeout(() => {
+                        flushTimer = null;
+                        flushUpdates();
+                    }, 2000);
                 }
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        return () => {
+            if (flushTimer) clearTimeout(flushTimer);
+            supabase.removeChannel(channel);
+        };
     }, [currentUser.twitch_id]);
 
     // Load more — uses refs to avoid stale closures
@@ -282,7 +410,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
 
     // ── Server-side search when filters or search are active ──
     const [searchResults, setSearchResults] = useState<Profile[] | null>(null);
-    const [searching, setSearching] = useState(false);
+    const [, setSearching] = useState(false);
 
     const hasActiveFilters = searchQuery.trim() !== '' ||
         genderFilter !== 'all' || ageMin !== '' || ageMax !== '' ||
@@ -618,28 +746,19 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
             {/* Grid */}
             <div className="profile-grid" ref={gridRef}>
                 {filteredProfiles.map((profile, index) => {
-                    const colIndex = index % columns;
-                    const isLeftHalf = colIndex < columns / 2;
-                    const slideDir = isLeftHalf ? 1 : -1;
-                    const rowDelay = Math.floor(index / columns) * 0.1;
-                    const colDelay = isLeftHalf ? colIndex * 0.05 : (columns - 1 - colIndex) * 0.05;
-
+                    const scoreData = compatibilityScores.get(profile.id);
                     return (
-                        <div
+                        <LazyCard
                             key={profile.id}
-                            className="grid-card-wrapper"
-                            style={{
-                                '--animation-order': index,
-                                '--slide-dir': slideDir,
-                                'animationDelay': `${rowDelay + colDelay}s`
-                            } as React.CSSProperties}
-                        >
-                            <ProfileCard
-                                profile={profile}
-                                currentUser={currentUser}
-                                onOpenProfile={() => openFullProfile(profile)}
-                            />
-                        </div>
+                            profile={profile}
+                            currentUser={currentUser}
+                            matchScore={scoreData?.score ?? null}
+                            isEstimated={scoreData?.isEstimated ?? true}
+                            onOpenProfile={() => openFullProfile(profile)}
+                            index={index}
+                            skipAnimation={index >= initialLoadCountRef.current}
+                            columns={columns}
+                        />
                     );
                 })}
             </div>

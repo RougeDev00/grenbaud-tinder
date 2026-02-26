@@ -274,8 +274,6 @@
     border: 1px solid rgba(139, 92, 246, 0.15);
     border-radius: 20px;
     padding: 4px 12px 4px 8px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 
 .version-dot {
@@ -408,9 +406,7 @@
     align-items: center;
     padding: 6px 0 0 0;
     padding-bottom: env(safe-area-inset-bottom, 6px);
-    background: rgba(6, 5, 11, 0.92);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: rgba(6, 5, 11, 0.95);
     border-top: 1px solid var(--border-subtle);
     z-index: 100;
 }

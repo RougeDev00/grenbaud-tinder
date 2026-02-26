@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { Profile } from '../types';
-import { calculateCompatibility } from '../utils/compatibility';
-import { getCompatibilityCacheKey, getCachedCompatibility } from '../services/aiService';
 import './ProfileCard.css';
 
 interface ProfileCardProps {
     profile: Profile;
     currentUser?: Profile;
     onOpenProfile?: () => void;
+    /** Pre-computed match score from parent (avoids per-card computation) */
+    matchScore?: number | null;
+    /** Whether the score is estimated (true) or AI-confirmed (false) */
+    isEstimated?: boolean;
 }
 
 const ARCHETYPES_MAP: Record<string, string> = {
@@ -17,31 +19,29 @@ const ARCHETYPES_MAP: Record<string, string> = {
     'ISTP': "Il Tecnico", 'ISFP': "L'Artista", 'ESTP': "Il Dinamico", 'ESFP': "L'Animatore",
 };
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenProfile }) => {
-    // State for score and estimation status
-    const [matchScore, setMatchScore] = useState<number | null>(null);
-    const [isEstimated, setIsEstimated] = useState(true);
+/**
+ * Generate a thumbnail URL for Supabase Storage images.
+ * Appends image transform params to resize on the CDN edge.
+ */
+const getThumbnailUrl = (url: string | null | undefined, width = 400): string | null => {
+    if (!url) return null;
+    // Only transform Supabase storage URLs
+    if (url.includes('supabase') && url.includes('/storage/')) {
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}width=${width}&resize=contain&quality=75`;
+    }
+    return url;
+};
 
-    React.useEffect(() => {
-        if (!currentUser || !profile) return;
+const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onOpenProfile, matchScore = null, isEstimated = true }) => {
+    // Photo management — all photos as thumbnails, lazy-loaded
+    const photos = useMemo(() =>
+        [profile.photo_1, profile.photo_2, profile.photo_3]
+            .filter(Boolean)
+            .map(url => getThumbnailUrl(url, 400)!)
+        , [profile.photo_1, profile.photo_2, profile.photo_3]);
 
-        const cacheKey = getCompatibilityCacheKey(currentUser.id, profile.id);
-        const cached = getCachedCompatibility(cacheKey);
-
-        if (cached) {
-            setMatchScore(cached.score);
-            setIsEstimated(false);
-        } else {
-            const estimated = calculateCompatibility(currentUser, profile);
-            setMatchScore(estimated);
-            setIsEstimated(true);
-        }
-    }, [currentUser, profile]);
-
-    // All photo URLs from profile (images lazy-load via browser)
-    const photos = [profile.photo_1, profile.photo_2, profile.photo_3].filter(Boolean) as string[];
     const [currentPhoto, setCurrentPhoto] = useState(0);
-    const [isCenterHovered, setIsCenterHovered] = useState(false);
 
     // Key processing
     const rawType = profile.personality_type || '';
@@ -54,49 +54,31 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
         'ISTP': '#e67e22', 'ISFP': '#e67e22', 'ESTP': '#ff00ff', 'ESFP': '#e67e22',
     };
 
-
-    const getZone = (e: React.MouseEvent | React.TouchEvent, rect: DOMRect) => {
-        const clientX = 'touches' in e ? (e as any).touches[0].clientX : (e as React.MouseEvent).clientX;
-        const x = clientX - rect.left;
-        const width = rect.width;
-
-        if (x < width * 0.3) return 'left';
-        if (x > width * 0.7) return 'right';
-        return 'center';
-    };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const zone = getZone(e, rect);
-        setIsCenterHovered(zone === 'center');
-    };
-
-    const handleMouseLeave = () => {
-        setIsCenterHovered(false);
-    };
-
-    const handlePhotoTap = (e: React.MouseEvent | React.TouchEvent) => {
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        const clientY = 'touches' in e ? (e as any).changedTouches[0].clientY : (e as React.MouseEvent).clientY;
-
-        const relativeY = clientY - rect.top;
-        const photoHeight = rect.width * (4 / 3);
-
-        if (relativeY > photoHeight) {
+    // Tap zone detection: left 30% = prev, right 30% = next, center 40% = open profile  
+    const handlePhotoTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+        if (photos.length <= 1) {
             onOpenProfile?.();
             return;
         }
 
-        const zone = getZone(e, rect);
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const clientX = 'touches' in e
+            ? (e as React.TouchEvent).changedTouches[0].clientX
+            : (e as React.MouseEvent).clientX;
+        const x = clientX - rect.left;
+        const width = rect.width;
 
-        if (zone === 'left') {
-            setCurrentPhoto(prev => Math.max(0, prev - 1));
-        } else if (zone === 'right') {
-            setCurrentPhoto(prev => Math.min(photos.length - 1, prev + 1));
+        if (x < width * 0.3) {
+            // Left zone → prev photo
+            setCurrentPhoto(prev => prev > 0 ? prev - 1 : prev);
+        } else if (x > width * 0.7) {
+            // Right zone → next photo
+            setCurrentPhoto(prev => prev < photos.length - 1 ? prev + 1 : prev);
         } else {
+            // Center zone → open profile
             onOpenProfile?.();
         }
-    };
+    }, [photos.length, onOpenProfile]);
 
     // Parse Hobbies
     const hobbiesList = profile.hobbies ? profile.hobbies.split(',').map(h => h.trim()).slice(0, 3) : [];
@@ -121,50 +103,23 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
 
     // Determine Badge Style
     const getBadgeStyle = (score: number, estimated: boolean) => {
-        // Estimated Scores: Neutral, Provisional
         if (estimated) {
-            return {
-                tier: 'estimated',
-                icon: '🔮',
-                label: 'STIMATA'
-            };
+            return { tier: 'estimated', icon: '🔮', label: 'STIMATA' };
         }
-
-        // Final AI Scores: Premium Tiers
-        if (score >= 85) return {
-            tier: 'titan',
-            icon: '🚀',
-            label: 'AI ✓'
-        };
-        if (score >= 70) return {
-            tier: 'high',
-            icon: '🔥',
-            label: 'AI ✓'
-        };
-        if (score >= 45) return {
-            tier: 'good',
-            icon: '✨',
-            label: 'AI ✓'
-        };
-        if (score >= 25) return {
-            tier: 'neutral',
-            icon: '🧊',
-            label: 'AI ✓'
-        };
-        return {
-            tier: 'cold',
-            icon: '❄️',
-            label: 'AI ✓'
-        };
+        if (score >= 85) return { tier: 'titan', icon: '🚀', label: 'AI ✓' };
+        if (score >= 70) return { tier: 'high', icon: '🔥', label: 'AI ✓' };
+        if (score >= 45) return { tier: 'good', icon: '✨', label: 'AI ✓' };
+        if (score >= 25) return { tier: 'neutral', icon: '🧊', label: 'AI ✓' };
+        return { tier: 'cold', icon: '❄️', label: 'AI ✓' };
     };
 
     const badgeStyle = matchScore !== null ? getBadgeStyle(matchScore, isEstimated) : null;
-
     const isGold = profile.twitch_username?.toLowerCase() === 'grenbaud';
 
     return (
-        <div className={`profile-card ${isCenterHovered ? 'is-center-hovered' : ''} ${isGold ? 'profile-card--gold' : ''}`} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+        <div className={`profile-card ${isGold ? 'profile-card--gold' : ''}`}>
             <div className="profile-card-photos" onClick={handlePhotoTap}>
+                {/* Photo dots — only if multiple photos */}
                 {photos.length > 1 && (
                     <div className="photo-dots">
                         {photos.map((_, i) => (
@@ -176,12 +131,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
                     </div>
                 )}
 
-                {/* Stacked Images for Instant Switching */}
+                {/* Stacked images — only current is visible, others lazy-load on swipe */}
                 {photos.map((photo, index) => (
                     <img
                         key={index}
                         src={photo}
-                        alt={`${profile.display_name} ${index + 1}`}
+                        alt={`${profile.display_name || 'Profile'} ${index + 1}`}
                         className={`profile-card-photo ${index === currentPhoto ? 'active' : ''}`}
                         draggable={false}
                         style={{
@@ -189,7 +144,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
                             zIndex: index === currentPhoto ? 2 : 1,
                             transition: 'opacity 0.2s ease-in-out'
                         }}
-                        loading="lazy"
+                        loading={index === 0 ? 'eager' : 'lazy'}
                         decoding="async"
                     />
                 ))}
@@ -205,11 +160,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
                 )}
 
                 <div className="profile-card-gradient" />
-
-                {/* View Profile Overlay - Triggered by center hover */}
-                <div className="profile-card-center-overlay">
-                    <span>Vedi Profilo</span>
-                </div>
 
                 <div className="profile-card-overlay">
                     {/* Name & Zodiac */}
@@ -267,4 +217,4 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, currentUser, onOpenP
     );
 };
 
-export default ProfileCard;
+export default React.memo(ProfileCard);

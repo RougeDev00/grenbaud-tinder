@@ -6,25 +6,18 @@
     overflow: hidden;
     z-index: -999;
     background-color: #040208;
-    /* Even darker, pure void base */
     pointer-events: none;
 }
 
-/* Base structural blobs */
+/* Static blobs — NO animation, NO blur for GPU performance */
 .bg-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
-    /* Less blur for more definition */
-    opacity: 0.6;
-    animation: blob-float 15s infinite alternate ease-in-out;
-    will-change: transform, opacity;
-    mix-blend-mode: screen;
-    /* Brighter intersections */
+    opacity: 0.35;
     pointer-events: none;
+    /* Use a pre-blurred radial gradient instead of filter: blur() */
 }
 
-/* Dynamic colors and timings */
 .blob-primary {
     top: -20%;
     left: -10%;
@@ -32,9 +25,7 @@
     height: 60vw;
     min-width: 500px;
     min-height: 500px;
-    background: radial-gradient(circle, #7C3AED 0%, rgba(124, 58, 237, 0) 70%);
-    animation-duration: 25s;
-    animation-delay: -5s;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.5) 0%, rgba(124, 58, 237, 0.15) 40%, rgba(124, 58, 237, 0) 70%);
 }
 
 .blob-secondary {
@@ -44,10 +35,7 @@
     height: 70vw;
     min-width: 600px;
     min-height: 600px;
-    background: radial-gradient(circle, #EC4899 0%, rgba(236, 72, 153, 0) 70%);
-    animation-duration: 30s;
-    animation-delay: -10s;
-    animation-direction: alternate-reverse;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.5) 0%, rgba(236, 72, 153, 0.15) 40%, rgba(236, 72, 153, 0) 70%);
 }
 
 .blob-accent {
@@ -57,12 +45,10 @@
     height: 50vw;
     min-width: 400px;
     min-height: 400px;
-    background: radial-gradient(circle, #2563EB 0%, rgba(37, 99, 235, 0) 70%);
-    animation-duration: 20s;
-    animation-delay: -2s;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.4) 0%, rgba(37, 99, 235, 0.1) 40%, rgba(37, 99, 235, 0) 70%);
 }
 
-/* NEW: Particle Starfield Effect */
+/* Static starfield — NO animation */
 .bg-particles {
     position: absolute;
     inset: 0;
@@ -75,81 +61,24 @@
         radial-gradient(2px 2px at 160px 120px, rgba(255, 255, 255, 0.7), rgba(0, 0, 0, 0));
     background-repeat: repeat;
     background-size: 200px 200px;
-    opacity: 0.15;
-    animation: star-drift 100s linear infinite;
+    opacity: 0.12;
     pointer-events: none;
     z-index: 1;
 }
 
-/* NEW: Animated Grid lines for structure */
+/* Hidden — grid is very expensive (3D perspective + animation) */
 .bg-grid {
-    position: absolute;
-    inset: -50%;
-    width: 200%;
-    height: 200%;
-    background-image:
-        linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
-    background-size: 60px 60px;
-    transform: perspective(1000px) rotateX(60deg) translateY(0) translateZ(-200px);
-    animation: grid-scroll 15s linear infinite;
-    pointer-events: none;
-    z-index: 2;
-    mask-image: radial-gradient(ellipse at center, black 10%, transparent 60%);
-    -webkit-mask-image: radial-gradient(ellipse at center, black 10%, transparent 60%);
+    display: none;
 }
 
+/* Noise overlay — lightweight */
 .bg-blob-overlay {
     position: absolute;
     inset: 0;
     background: transparent;
     z-index: 3;
-    opacity: 0.25;
-    /* Stronger noise */
+    opacity: 0.2;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     pointer-events: none;
     mix-blend-mode: overlay;
-}
-
-/* Animations */
-@keyframes blob-float {
-    0% {
-        transform: translate(0, 0) scale(1) rotate(0deg);
-        opacity: 0.5;
-    }
-
-    33% {
-        transform: translate(15vw, -15vh) scale(1.2) rotate(45deg);
-        opacity: 0.8;
-    }
-
-    66% {
-        transform: translate(-10vw, 10vh) scale(0.9) rotate(90deg);
-        opacity: 0.6;
-    }
-
-    100% {
-        transform: translate(5vw, 15vh) scale(1.1) rotate(135deg);
-        opacity: 0.7;
-    }
-}
-
-@keyframes star-drift {
-    0% {
-        background-position: 0 0;
-    }
-
-    100% {
-        background-position: -2000px -2000px;
-    }
-}
-
-@keyframes grid-scroll {
-    0% {
-        transform: perspective(1000px) rotateX(60deg) translateY(0) translateZ(-200px);
-    }
-
-    100% {
-        transform: perspective(1000px) rotateX(60deg) translateY(60px) translateZ(-200px);
-    }
 }

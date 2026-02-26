@@ -14,9 +14,7 @@
     justify-content: center;
     padding: 0 20px;
     height: 58px;
-    background: linear-gradient(180deg, rgba(6, 5, 11, 0.85) 0%, rgba(6, 5, 11, 0.6) 100%);
-    backdrop-filter: blur(24px) saturate(1.2);
-    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    background: rgba(6, 5, 11, 0.92);
     border-bottom: none;
     position: sticky;
     top: 0;
@@ -82,21 +80,10 @@
     height: 100%;
     max-width: 600px;
     max-height: 800px;
-    background: radial-gradient(circle at center, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.05) 40%, transparent 70%);
+    background: radial-gradient(circle at center, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.03) 40%, transparent 70%);
     z-index: -1;
     pointer-events: none;
-    animation: spotlight-pulse 4s ease-in-out infinite alternate;
-    will-change: opacity;
-}
-
-@keyframes spotlight-pulse {
-    0% {
-        opacity: 0.5;
-    }
-
-    100% {
-        opacity: 0.8;
-    }
+    opacity: 0.6;
 }
 
 /* Matches Page */
