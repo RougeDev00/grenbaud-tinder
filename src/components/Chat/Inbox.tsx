@@ -255,9 +255,11 @@ const Inbox: React.FC<InboxProps> = ({ currentUser, onSelectChat, refreshTrigger
     const handleSendCiao = async (profile: Profile) => {
         setSendingTo(profile.id);
         try {
-            // Verify mutual AI analysis before allowing chat
-            const isAdmin = currentUser.twitch_username?.toLowerCase() === 'grenbaud';
-            if (!isAdmin) {
+            // ⚠️ TEMPORARILY DISABLED — re-enable by uncommenting:
+            // const isAdmin = currentUser.twitch_username?.toLowerCase() === 'grenbaud';
+            // if (!isAdmin) {
+            const needsUnlock = true; // treat everyone equally
+            if (needsUnlock) {
                 const unlocked = await checkMutualAnalysis(currentUser.id, profile.id);
                 if (!unlocked) {
                     alert('Devi prima generare l\'affinità AI con questo utente!');

@@ -15,6 +15,7 @@ import './ProfileGrid.css';
 interface ProfileGridProps {
     currentUser: Profile;
     onOpenChat?: (user: Profile) => void;
+    onMatchDetected?: (matchedProfile: Profile) => void;
 }
 
 type GenderFilter = 'all' | 'M' | 'F' | 'NS';
@@ -84,7 +85,7 @@ const LazyCard: React.FC<{
     );
 });
 
-const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) => {
+const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat, onMatchDetected }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [mockProfiles, setMockProfiles] = useState<Profile[]>([]);
     const [isDemo] = useState(false);
@@ -565,6 +566,7 @@ const ProfileGrid: React.FC<ProfileGridProps> = ({ currentUser, onOpenChat }) =>
                     currentUser={currentUser}
                     readOnly
                     onOpenChat={() => onOpenChat?.(selectedProfile)}
+                    onMatchDetected={onMatchDetected}
                 />
             </div>
         );

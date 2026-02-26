@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import type { Profile } from '../../types';
 import { calculateCompatibility } from '../../utils/compatibility';
 import { getCachedCompatibility, getCompatibilityCacheKey, generateCompatibilityExplanation, getStoredCompatibility } from '../../services/aiService';
-import { checkMutualAnalysis } from '../../services/notificationService';
+import { checkMutualAnalysis, createNotification } from '../../services/notificationService';
 
 interface CompatibilityCardProps {
     profile: Profile;
     currentUser: Profile;
+    onMatchDetected?: (matchedProfile: Profile) => void;
+    onChatUnlocked?: () => void;
 }
 
-export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, currentUser }) => {
+export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, currentUser, onMatchDetected, onChatUnlocked }) => {
     const [matchScore, setMatchScore] = useState<number | null>(null);
     const [isEstimated, setIsEstimated] = useState(true);
     const [compatibilityExplanation, setCompatibilityExplanation] = useState<string | null>(null);
@@ -87,6 +89,14 @@ export const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ profile, c
             // After generating, re-check unlock status
             const unlocked = await checkMutualAnalysis(currentUser.id, profile.id);
             setIsChatUnlocked(unlocked);
+            // 🎉 Mutual match detected! Trigger overlay for current user + notify the other
+            if (unlocked && onMatchDetected) {
+                onMatchDetected(profile);
+                // Send MATCH notification to the OTHER user so they see it in real-time
+                createNotification(profile.id, 'MATCH', currentUser.id);
+                // Immediately unlock the chat button in ProfileView
+                onChatUnlocked?.();
+            }
         } else {
             alert("Errore durante l'analisi della compatibilità. Riprova più tardi.");
             setIsExplanationExpanded(false);

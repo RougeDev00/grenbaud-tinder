@@ -126,11 +126,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, otherUser, onClose
 
     // Check mutual analysis on mount — block chat if not unlocked
     useEffect(() => {
-        const isAdmin = currentUser.twitch_username?.toLowerCase() === 'grenbaud';
-        if (isAdmin) {
-            setChatUnlocked(true);
-            return;
-        }
+        // ⚠️ TEMPORARILY DISABLED — re-enable by uncommenting:
+        // const isAdmin = currentUser.twitch_username?.toLowerCase() === 'grenbaud';
+        // if (isAdmin) {
+        //     setChatUnlocked(true);
+        //     return;
+        // }
         checkMutualAnalysis(currentUser.id, otherUser.id).then(unlocked => {
             setChatUnlocked(unlocked);
         });

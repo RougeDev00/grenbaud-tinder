@@ -17,6 +17,7 @@ import Navbar from './components/Navbar';
 import Inbox from './components/Chat/Inbox';
 import ChatWindow from './components/Chat/ChatWindow';
 import OnboardingTutorial from './components/OnboardingTutorial';
+import MatchOverlay from './components/MatchOverlay';
 import UpdateModal, { useUpdateModal } from './components/UpdateModal';
 import InstallPrompt from './components/InstallPrompt';
 import { markConversationRead, subscribeToMessages, getTotalUnreadCount } from './services/chatService';
@@ -85,6 +86,12 @@ const AppContent: React.FC = () => {
   const [inboxRefreshTrigger, setInboxRefreshTrigger] = useState(0);
   const [localWarningDismissed, setLocalWarningDismissed] = useState(false);
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('baudr_tutorial_completed'));
+  const [matchProfile, setMatchProfile] = useState<Profile | null>(null);
+
+  // Handle match detected from CompatibilityCard
+  const handleMatchDetected = useCallback((matchedProfile: Profile) => {
+    setMatchProfile(matchedProfile);
+  }, []);
 
   // Refresh unread count (private + event chats)
   const refreshUnreadCount = useCallback(async () => {
@@ -130,6 +137,38 @@ const AppContent: React.FC = () => {
       clearInterval(inactiveInterval);
     };
   }, [profile?.twitch_id, profile?.is_registered, refreshUnreadCount]);
+
+  // Realtime subscription for MATCH notifications (other user just matched with us!)
+  useEffect(() => {
+    if (!profile?.id || !profile?.is_registered) return;
+
+    const channel = supabase
+      .channel('match-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${profile.id}`,
+        },
+        async (payload: any) => {
+          const newNotif = payload.new;
+          if (newNotif?.type === 'MATCH' && newNotif?.actor_id) {
+            // Fetch the actor profile to show in the overlay
+            const actorProfile = await getProfile(newNotif.actor_id);
+            if (actorProfile) {
+              setMatchProfile(actorProfile);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, profile?.is_registered]);
 
   // Refresh unread count on route change (so badge is always current)
   useEffect(() => {
@@ -579,7 +618,7 @@ const AppContent: React.FC = () => {
         <div className="main-spotlight" />
         <Routes>
           <Route path="/" element={
-            <ProfileGrid currentUser={profile} onOpenChat={handleOpenChat} />
+            <ProfileGrid currentUser={profile} onOpenChat={handleOpenChat} onMatchDetected={handleMatchDetected} />
           } />
           <Route path="/threads" element={
             <ThreadsFeed currentUser={profile} onOpenProfile={(user) => {
@@ -617,6 +656,7 @@ const AppContent: React.FC = () => {
                 readOnly={!!activeChatUser}
                 onLogout={handleLogout}
                 onOpenChat={() => handleOpenChat(activeChatUser!)}
+                onMatchDetected={handleMatchDetected}
               />
             </div>
           } />
@@ -647,6 +687,16 @@ const AppContent: React.FC = () => {
           }}
           onNewMessage={refreshUnreadCount}
           onOpenProfile={() => navigate('/profile')}
+        />
+      )}
+
+      {/* Match Overlay — shown when mutual compatibility is detected */}
+      {matchProfile && profile && (
+        <MatchOverlay
+          matchedProfile={matchProfile}
+          currentUser={profile}
+          onClose={() => setMatchProfile(null)}
+          onOpenChat={handleOpenChat}
         />
       )}
 

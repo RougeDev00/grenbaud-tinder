@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-export type NotificationType = 'SPY' | 'SPY_RECIPROCAL' | 'EVENT_REQUEST' | 'EVENT_ACCEPT' | 'EVENT_REJECT' | 'EVENT_REMOVE' | 'ESPLORA_LIKE' | 'ESPLORA_COMMENT' | 'ESPLORA_REPLY';
+export type NotificationType = 'SPY' | 'SPY_RECIPROCAL' | 'EVENT_REQUEST' | 'EVENT_ACCEPT' | 'EVENT_REJECT' | 'EVENT_REMOVE' | 'ESPLORA_LIKE' | 'ESPLORA_COMMENT' | 'ESPLORA_REPLY' | 'MATCH';
 
 export interface Notification {
     id: string;

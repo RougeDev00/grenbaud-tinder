@@ -103,14 +103,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onOpenProfile, match
 
     // Determine Badge Style
     const getBadgeStyle = (score: number, estimated: boolean) => {
-        if (estimated) {
-            return { tier: 'estimated', icon: '🔮', label: 'STIMATA' };
-        }
-        if (score >= 85) return { tier: 'titan', icon: '🚀', label: 'AI ✓' };
-        if (score >= 70) return { tier: 'high', icon: '🔥', label: 'AI ✓' };
-        if (score >= 45) return { tier: 'good', icon: '✨', label: 'AI ✓' };
-        if (score >= 25) return { tier: 'neutral', icon: '🧊', label: 'AI ✓' };
-        return { tier: 'cold', icon: '❄️', label: 'AI ✓' };
+        if (estimated) return { tier: 'estimated', label: 'STIMATA' };
+        if (score >= 85) return { tier: 'titan', label: 'AI ✓' };
+        if (score >= 70) return { tier: 'high', label: 'AI ✓' };
+        if (score >= 45) return { tier: 'good', label: 'AI ✓' };
+        if (score >= 25) return { tier: 'neutral', label: 'AI ✓' };
+        return { tier: 'cold', label: 'AI ✓' };
     };
 
     const badgeStyle = matchScore !== null ? getBadgeStyle(matchScore, isEstimated) : null;
@@ -151,7 +149,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onOpenProfile, match
 
                 {matchScore !== null && badgeStyle && (
                     <div className={`match-badge match-tier-${badgeStyle.tier} ${!isEstimated ? 'match-badge--final' : 'match-badge--estimated'}`}>
-                        <span className="match-icon">{badgeStyle.icon}</span>
                         <div className="match-score-content">
                             <span className="match-percent">{isEstimated ? '~' : ''}{matchScore}%</span>
                             <span className="match-label">{badgeStyle.label}</span>

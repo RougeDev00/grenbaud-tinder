@@ -26,6 +26,7 @@ interface ProfileViewProps {
     onLogout?: () => void;
     readOnly?: boolean;
     onOpenChat?: () => void;
+    onMatchDetected?: (matchedProfile: Profile) => void;
 }
 
 /* ---- Colored SVG icons matching ProfileCard ---- */
@@ -101,7 +102,7 @@ const Section = ({ iconKey, label, value }: { iconKey: string; label: string; va
     );
 };
 
-const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, currentUser, onLogout, readOnly = false, onOpenChat }) => {
+const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, currentUser, onLogout, readOnly = false, onOpenChat, onMatchDetected }) => {
     const { user, session } = useAuth();
     const [profile, setProfile] = useState<Profile>(initialProfile);
     const [isEditing, setIsEditing] = useState(false);
@@ -266,11 +267,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
     React.useEffect(() => {
         const fetchUnlockStatus = async () => {
             if (!currentUser?.id || !profile?.id || currentUser.id === profile.id) return;
+            // ⚠️ TEMPORARILY DISABLED — re-enable by uncommenting:
             // Admin (grenbaud) always has chat unlocked
-            if (currentUser.twitch_username?.toLowerCase() === 'grenbaud') {
-                setIsChatUnlocked(true);
-                return;
-            }
+            // if (currentUser.twitch_username?.toLowerCase() === 'grenbaud') {
+            //     setIsChatUnlocked(true);
+            //     return;
+            // }
             const unlocked = await checkMutualAnalysis(currentUser.id, profile.id);
             setIsChatUnlocked(unlocked);
         };
@@ -724,7 +726,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ profile: initialProfile, curr
                     ) : (
                         <>
                             {readOnly && currentUser && currentUser.id !== profile.id && (
-                                <CompatibilityCard profile={profile} currentUser={currentUser} />
+                                <CompatibilityCard profile={profile} currentUser={currentUser} onMatchDetected={onMatchDetected} onChatUnlocked={() => setIsChatUnlocked(true)} />
                             )}
 
                             <div className="profile-view-name-row">

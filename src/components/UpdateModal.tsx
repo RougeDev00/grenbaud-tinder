@@ -3,6 +3,18 @@ import React, { useState, useEffect } from 'react';
 // ── All versions, newest first ──
 const ALL_VERSIONS = [
     {
+        version: '0.8',
+        date: '26 Feb 2026',
+        items: [
+            { emoji: '🤝', text: 'Nuovo popup "Connessione!": quando entrambi generate l\'affinità AI, appare un popup con confetti a entrambi gli utenti in tempo reale!' },
+            { emoji: '💬', text: 'Dal popup puoi scrivere subito un messaggio diretto senza tornare al profilo' },
+            { emoji: '❤️', text: 'Nuova opzione "Trovare l\'Amore" nella registrazione e modifica profilo' },
+            { emoji: '⚡', text: 'Pagina principale più fluida: ottimizzazioni di rendering e scroll' },
+            { emoji: '🧹', text: 'Card della griglia più pulite e leggibili' },
+            { emoji: '🐛', text: 'Fix minori di stabilità e performance' },
+        ],
+    },
+    {
         version: '0.7.5',
         date: '25 Feb 2026',
         items: [
