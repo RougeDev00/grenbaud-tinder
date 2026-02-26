@@ -100,7 +100,7 @@ const ThreadsFeed: React.FC<ThreadsFeedProps> = ({ currentUser, onOpenProfile })
                     <h1>Esplora</h1>
                     <p className="threads-header-subtitle">
                         <span className="threads-header-dot" />
-                        I post scompaiono dopo 24 ore
+                        I post vengono eliminati dopo 1 mese
                     </p>
                 </div>
                 <button className="btn-new-post" onClick={() => setShowCreateModal(true)}>

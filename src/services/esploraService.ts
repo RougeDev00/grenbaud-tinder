@@ -2,17 +2,44 @@ import { supabase } from '../lib/supabase';
 import type { EsploraPost, EsploraPostWithProfile, EsploraCommentWithProfile } from '../types';
 
 /**
- * Fetches all Esplora posts from the last 24 hours, including creator profiles
+ * Deletes Esplora posts older than 1 month.
+ */
+export const deleteOldEsploraPosts = async (): Promise<void> => {
+    try {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const { error } = await supabase
+            .from('esplora_posts')
+            .delete()
+            .lt('created_at', oneMonthAgo.toISOString())
+            .eq('is_pinned', false);
+        if (error) {
+            console.error('Error deleting old esplora posts:', error);
+        }
+    } catch (err) {
+        console.error('Exception in deleteOldEsploraPosts:', err);
+    }
+};
+
+/**
+ * Fetches all Esplora posts from the last month, including creator profiles
  * and whether the current user has liked them.
  */
 export const getEsploraPosts = async (currentUserId: string): Promise<EsploraPostWithProfile[]> => {
     try {
+        // Clean up old posts on each fetch
+        await deleteOldEsploraPosts();
+
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
         const { data: postsData, error: postsError } = await supabase
             .from('esplora_posts')
             .select(`
                 *,
                 profile:profiles!esplora_posts_user_id_fkey(*)
             `)
+            .gte('created_at', oneMonthAgo.toISOString())
             .order('created_at', { ascending: false });
 
         if (postsError) {
