@@ -52,9 +52,15 @@ const AppContent: React.FC = () => {
     const checkSub = async () => {
       setSubCheckStatus('checking');
 
-      const twitchUsername = user.user_metadata?.user_name?.toLowerCase()
-        || user.user_metadata?.preferred_username?.toLowerCase()
-        || '';
+      const twitchUsername = (
+        user.user_metadata?.user_name
+        || user.user_metadata?.preferred_username
+        || user.user_metadata?.full_name
+        || user.user_metadata?.name
+        || ''
+      ).toLowerCase().trim();
+
+      console.log('[SubCheck] Detected username:', twitchUsername, '| metadata:', JSON.stringify(user.user_metadata));
 
       // Whitelist — these users bypass the sub check
       const WHITELIST = ['grenbaud', 'edo4rdo_g', 'donmedellin'];
