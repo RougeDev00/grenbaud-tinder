@@ -70,13 +70,23 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      if (!providerToken) {
+      // Try to get provider token from multiple sources
+      let token = providerToken || sessionStorage.getItem('twitch_provider_token');
+
+      // If no token yet, wait briefly for auth to complete (token arrives on SIGNED_IN event)
+      if (!token) {
+        console.log('[SubCheck] No token yet, waiting 2s for auth to complete...');
+        await new Promise(r => setTimeout(r, 2000));
+        token = providerToken || sessionStorage.getItem('twitch_provider_token');
+      }
+
+      if (!token) {
         console.warn('[SubCheck] No provider token available — cannot check subscription');
         setSubCheckStatus('not_subscribed');
         return;
       }
       try {
-        const result = await checkGrenbaudSubscription(providerToken);
+        const result = await checkGrenbaudSubscription(token!);
         console.log('[SubCheck] Result:', result);
         setSubCheckStatus(result.isSubscribed ? 'subscribed' : 'not_subscribed');
       } catch (err) {
