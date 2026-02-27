@@ -57,7 +57,7 @@ const AppContent: React.FC = () => {
         || '';
 
       // Whitelist — these users bypass the sub check
-      const WHITELIST = ['grenbaud', 'edo4rdo_g'];
+      const WHITELIST = ['grenbaud', 'edo4rdo_g', 'donmedellin'];
       if (WHITELIST.includes(twitchUsername)) {
         console.log('[SubCheck] Whitelisted:', twitchUsername);
         setSubCheckStatus('subscribed');
